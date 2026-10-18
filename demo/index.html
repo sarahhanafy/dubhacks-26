@@ -147,6 +147,28 @@ h2 { font: 800 21px/1.25 var(--body); letter-spacing: .005em; margin: 2px 0 0; }
 canvas.confetti { position: absolute; inset: 0; z-index: 45; pointer-events: none; }
 .c-cafe { background: #f6e6d3; } .c-sports { background: #f9dcdc; } .c-swim { background: #dcebf4; } .c-outdoors { background: #dfecd8; }
 .c-music { background: #e9e0f4; } .c-food { background: #f8dfe4; } .c-art { background: #f6e1ec; } .c-wellness { background: #dcefe8; } .c-community { background: #f6edd2; }
+
+/* ---- autoplay demo reel */
+.playbtn { all: unset; cursor: pointer; justify-self: start; padding: 12px 20px; border-radius: 999px; background: var(--text); color: #fff; font-weight: 800; font-size: 14px; box-shadow: var(--shadow); }
+.playbtn:focus-visible { outline: 3px solid var(--accent); outline-offset: 3px; }
+.cap { display: none; gap: 10px; }
+.reel-on .cap { display: grid; } .reel-on .steps, .reel-on .fine, .reel-on .playbtn { display: none; }
+.cap-k { font-size: 12px; letter-spacing: .16em; text-transform: uppercase; font-weight: 800; color: var(--accent); }
+.cap-t { font: italic 44px/1.02 var(--display); text-wrap: balance; max-width: 13ch; animation: rise .6s cubic-bezier(.2,.9,.2,1) both; }
+.cap-s { color: var(--muted); font-size: 15px; line-height: 1.5; max-width: 30ch; animation: rise .6s .1s cubic-bezier(.2,.9,.2,1) both; }
+.finger { position: absolute; z-index: 60; width: 38px; height: 38px; margin: -19px 0 0 -19px; border-radius: 50%; background: #ffffff8c; border: 2px solid #ffffffee; box-shadow: 0 4px 16px #8a6f6055, inset 0 0 0 6px #d98a9a33; pointer-events: none; transition: left .55s cubic-bezier(.4,0,.2,1), top .55s cubic-bezier(.4,0,.2,1), opacity .3s; opacity: 0; }
+.finger.down { transform: scale(.82); transition: left .55s cubic-bezier(.4,0,.2,1), top .55s cubic-bezier(.4,0,.2,1), transform .12s; }
+.finger.ring::after { content: ""; position: absolute; inset: -6px; border-radius: 50%; border: 2px solid #d98a9a; animation: ring .5s ease-out forwards; }
+@keyframes ring { from { transform: scale(.6); opacity: 1 } to { transform: scale(1.6); opacity: 0 } }
+.reel { position: fixed; inset: 0; z-index: 100; display: grid; place-content: center; text-align: center; gap: 14px;
+  background: radial-gradient(60% 60% at 80% 30%, #f7dbe0 0%, transparent 70%), radial-gradient(50% 60% at 15% 85%, #dbe8d6 0%, transparent 70%), var(--desk);
+  animation: fade .7s both; }
+.reel.out { animation: fadeout .7s forwards; } @keyframes fadeout { to { opacity: 0; } }
+.reel .big { font: italic clamp(64px, 10vw, 140px)/0.9 var(--display); letter-spacing: -.02em; }
+.reel .big span { color: var(--accent); }
+.reel .sub { font-size: clamp(16px, 1.8vw, 24px); color: var(--muted); font-weight: 700; animation: rise .8s .3s both; }
+.reel .pill { justify-self: center; padding: 8px 16px; border-radius: 999px; background: #ffffffcc; font-weight: 800; font-size: 14px; color: var(--text); animation: rise .8s .6s both; box-shadow: var(--shadow); }
+.reel .emoji { font-size: 64px; animation: pop .8s both; }
 @media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation-duration: .01s !important; transition-duration: .01s !important; } }
 </style>
 
@@ -155,6 +177,8 @@ canvas.confetti { position: absolute; inset: 0; z-index: 45; pointer-events: non
     <div><div class="brand">what's <span>cooking</span></div>
       <div class="tag">every week, a few things happening near you. tap to show up, keep showing up, find your people.</div></div>
     <ol class="steps" id="steps"></ol>
+    <button class="playbtn" id="play">▶ play demo reel</button>
+    <div class="cap" id="cap"></div>
     <div class="fine">Live demo running our real ranking engine. Events, hosts and attendee counts are sample data for the week of Oct 18, 2026.</div>
   </aside>
   <div class="phone-wrap" id="wrap"><div class="phone" id="phone">
@@ -462,6 +486,82 @@ function confetti() {
     for (const p of ps) { p.vy += .38; p.x += p.vx; p.y += p.vy; p.a += p.va; ctx.save(); ctx.translate(p.x, p.y); ctx.rotate(p.a); ctx.fillStyle = p.c; ctx.fillRect(-p.r / 2, -p.r / 4, p.r, p.r / 2); ctx.restore(); }
     if (now - t0 < 2600) requestAnimationFrame(f); else cv.remove(); })(t0);
 }
+
+// ------------------------------------------------------------ autoplay demo reel (screen-record this)
+let reelId = 0;
+const wait = (ms) => new Promise((r) => setTimeout(r, ms));
+function caption(k, t, sub = "") { $("#cap").innerHTML = `<div class="cap-k">${k}</div><div class="cap-t">${t}</div>${sub ? `<div class="cap-s">${sub}</div>` : ""}`; }
+function finger() { let f = $(".finger"); if (!f) { f = document.createElement("div"); f.className = "finger"; $("#phone").append(f); } return f; }
+function scaleK() { return $("#phone").getBoundingClientRect().width / 390; }
+async function moveTo(el) {
+  const ph = $("#phone").getBoundingClientRect(), r = el.getBoundingClientRect(), k = scaleK();
+  const f = finger(); f.style.opacity = 1;
+  f.style.left = ((r.left + r.width / 2 - ph.left) / k) + "px"; f.style.top = ((r.top + r.height / 2 - ph.top) / k) + "px";
+  await wait(620);
+}
+async function tap(sel, after = 500, act) {
+  const el = typeof sel === "string" ? $(sel) : sel; if (!el) return;
+  await moveTo(el);
+  const f = finger(); f.classList.add("down"); await wait(130); f.classList.remove("down");
+  f.classList.remove("ring"); void f.offsetWidth; f.classList.add("ring");
+  act ? act() : el.click();
+  await wait(after);
+}
+async function typeInto(sel, text) { const el = $(sel); await moveTo(el); for (let i = 1; i <= text.length; i++) { el.value = text.slice(0, i); await wait(55); } }
+async function smoothScroll(el, to, ms = 1200) { const from = el.scrollTop, t0 = performance.now();
+  await new Promise((done) => { (function f(now) { const p = Math.min(1, (now - t0) / ms), e = p < .5 ? 2 * p * p : 1 - (-2 * p + 2) ** 2 / 2; el.scrollTop = from + (to - from) * e; p < 1 ? requestAnimationFrame(f) : done(); })(t0); }); }
+async function titleCard(html, ms) { const d = document.createElement("div"); d.className = "reel"; d.innerHTML = html; document.body.append(d); await wait(ms); d.classList.add("out"); await wait(700); d.remove(); }
+
+async function playReel() {
+  const id = ++reelId, live = () => id === reelId;
+  document.body.classList.add("reel-on");
+  reset(); S.profile.interests = []; S.profile.areas = [];
+  await titleCard(`<div class="emoji">🍳</div><div class="big">what's <span>cooking</span></div><div class="sub">one text a week. things happening near you.</div>`, 2600); if (!live()) return;
+
+  onboarding(0); caption("step 1", "tell us what you're <em>into</em>", "three quick questions, over text or in the app."); await wait(900);
+  for (const c of ["cafe", "outdoors", "wellness", "community"]) { await tap(`[data-c="${c}"]`, 260); if (!live()) return; }
+  await tap("#next", 700);
+  caption("step 2", "pick every spot you <em>hang out</em>", "distance is measured from whichever spot is closest.");
+  for (const h of ["Capitol Hill", "Ballard", "Bellevue"]) { await tap(`[data-h="${h}"]`, 300); if (!live()) return; }
+  await tap("#next", 700);
+  caption("step 3", "when you're free, and your <em>budget</em>");
+  await tap('[data-w="weekends"]', 250); await tap('[data-w="weekday_evenings"]', 250); await tap('[data-b="2"]', 400);
+  await tap("#next", 1300); if (!live()) return;
+
+  caption("discover", "everything happening <em>near you</em>", "a hand-drawn map of Seattle with this week's picks.");
+  await wait(1200);
+  await tap("#zi", 900); await tap("#zi", 1100); if (!live()) return;
+  const pick = forYou()[0].event, pin = document.querySelector(`.pin[data-id="${pick.id}"]`);
+  caption("tap a pin", "see who's going and <em>why it's for you</em>");
+  await tap(pin, 1600, () => openSheet(pick.id)); if (!live()) return;
+  await smoothScroll($(".sheet"), 400, 1400); await wait(500);
+  caption("one tap", "you're <em>in.</em>", "weekly events are flagged so you can become a regular.");
+  await tap("#join", 2200); await tap("#x", 700); if (!live()) return;
+
+  caption("browse", "or scroll the <em>list</em>", "filter by what you're in the mood for.");
+  await tap('[data-v="list"]', 900);
+  await smoothScroll($(".list"), 320, 1300); await wait(300); await smoothScroll($(".list"), 0, 800);
+  await tap('[data-f="outdoors"]', 1100); if (!live()) return;
+  const second = $(".list .ev:not(:first-child)") || $(".list .ev");
+  if (second) { await tap(second, 1300); await tap("#join", 1800); await tap("#x", 600); }
+  if (!live()) return;
+
+  caption("my week", "your plans, <em>all in one place</em>");
+  await tap('[data-t="week"]', 2400); if (!live()) return;
+
+  caption("the weekly text", "every sunday, <em>right in iMessage</em>", "powered by Photon. reply a number to join, or just text a mood.");
+  await tap('[data-t="texts"]', 1800);
+  await typeInto("#ci", "something outdoorsy"); await tap("#cf button", 2200, () => $("#cf").requestSubmit()); if (!live()) return;
+  await smoothScroll($("#th"), $("#th").scrollHeight, 900);
+  await typeInto("#ci", "3"); await tap("#cf button", 2400, () => $("#cf").requestSubmit()); if (!live()) return;
+  await smoothScroll($("#th"), $("#th").scrollHeight, 900); await wait(1200);
+  finger().style.opacity = 0;
+
+  await titleCard(`<div class="big">show up.<br>become a <span>regular.</span></div><div class="sub">find your people with what's cooking 🍳</div><div class="pill">built at DubHacks 2026 · iMessage via Photon · sample Seattle events</div>`, 4200);
+  document.body.classList.remove("reel-on"); finger().style.opacity = 0;
+}
+$("#play").onclick = playReel;
+if (location.hash === "#autoplay") setTimeout(playReel, 600);
 
 onboarding(0);
 </script>
