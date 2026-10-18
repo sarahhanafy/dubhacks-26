@@ -4,6 +4,7 @@
 import { readFileSync, writeFileSync, mkdirSync } from "node:fs";
 import { rankEvents, parseAreas, parseBudget, parseInterests, parseWhen, type Pick, type Profile } from "../../src/domain/discovery.js";
 import { EVENTS, type CommunityEvent } from "../../src/events/seattle.js";
+import { createHostedEvent, parseHostText, type HostInput } from "../../src/domain/hosting.js";
 
 export interface Transport { dm(userId: string, text: string): Promise<void> }
 export type ProfileParser = (answer: string) => Promise<Partial<Profile>>;
@@ -19,6 +20,7 @@ interface UserState {
   joined: string[];
   remindedIds: string[];
   lastDigestWeek?: string;
+  lastActive?: number;
 }
 
 const TZ = process.env.HUDDLE_TZ ?? "America/Los_Angeles";
@@ -31,6 +33,8 @@ const weekKey = (d: Date) => { const s = new Date(d); s.setUTCDate(s.getUTCDate(
 export class CookingBot {
   users = new Map<string, UserState>();
   events: CommunityEvent[] = structuredClone(EVENTS);
+  /** Bumped on every change so the app can poll cheaply. */
+  version = 0;
 
   constructor(
     public transport: Transport,
@@ -45,13 +49,21 @@ export class CookingBot {
     try {
       const data = JSON.parse(readFileSync(this.storePath, "utf8"));
       for (const u of data.users ?? []) this.users.set(u.id, u);
+      for (const ev of data.hosted ?? []) if (!this.events.some((e) => e.id === ev.id)) this.events.push(ev);
       for (const [id, going] of Object.entries(data.going ?? {})) { const ev = this.events.find((e) => e.id === id); if (ev) ev.going = going as number; }
+      for (const [id, list] of Object.entries(data.bringing ?? {})) { const ev = this.events.find((e) => e.id === id); if (ev) ev.bringing = list as string[]; }
     } catch { /* first run */ }
   }
   private save() {
+    this.version++;
     if (!this.storePath) return;
     mkdirSync(this.storePath.replace(/\/[^/]+$/, ""), { recursive: true });
-    writeFileSync(this.storePath, JSON.stringify({ users: [...this.users.values()], going: Object.fromEntries(this.events.map((e) => [e.id, e.going])) }, null, 2));
+    writeFileSync(this.storePath, JSON.stringify({
+      users: [...this.users.values()],
+      hosted: this.events.filter((e) => !e.isSample),
+      going: Object.fromEntries(this.events.map((e) => [e.id, e.going])),
+      bringing: Object.fromEntries(this.events.filter((e) => e.bringing).map((e) => [e.id, e.bringing])),
+    }, null, 2));
   }
 
   private say(u: UserState, text: string) { return u.stopped ? Promise.resolve() : this.transport.dm(u.id, text); }
@@ -60,10 +72,11 @@ export class CookingBot {
   async handle(fromId: string, raw: string): Promise<void> {
     const text = raw.trim(), up = text.toUpperCase();
     let u = this.users.get(fromId);
+    if (u) u.lastActive = Date.now();
 
     // Texting us first is the opt-in (PRD §5: only message people who initiated contact).
     if (!u) {
-      u = { id: fromId, step: "interests", profile: { interests: [], when: [] }, lastList: [], sent: [], joined: [], remindedIds: [] };
+      u = { id: fromId, step: "interests", profile: { interests: [], when: [] }, lastList: [], sent: [], joined: [], remindedIds: [], lastActive: Date.now() };
       this.users.set(fromId, u);
       this.save();
       return this.say(u,
@@ -84,6 +97,9 @@ export class CookingBot {
       return this.digest(u, true);
     }
     if (up === "MORE") return this.digest(u, false);
+    if (/^HOST\b/.test(up)) return this.hostByText(u, text);
+    const bring = text.match(/^bring(?:ing)?\s+(.+)/i);
+    if (bring) return this.bring(u, bring[1]!.trim());
     if (up === "MY" || up === "MY PLANS" || up === "PLANS") return this.myPlans(u);
     const join = up.match(/^(?:JOIN|GO|RSVP|IN)?\s*#?(\d{1,2})$/);
     if (join) return this.join(u, +join[1]! - 1);
@@ -163,32 +179,88 @@ export class CookingBot {
     return this.say(u,
       `${ev.emoji} ${ev.title}\n${longWhen(ev.start)} – ${fmt(ev.end, { hour: "numeric", minute: "2-digit" })}\n📍 ${ev.place}, ${ev.neighborhood}\n` +
       `${price(ev.cost)} · ${ev.going}/${ev.capacity} going${ev.beginnerFriendly ? " · beginner-friendly" : ""}${ev.recurring ? ` · ${ev.recurring}` : ""}\n\n` +
-      `${ev.blurb}\nhosted by ${ev.host} (sample)\n\nreply ${i + 1} to join.`);
+      `${ev.blurb}\nhosted by ${ev.host}${ev.isSample ? " (sample)" : ""}` +
+      (ev.potluck ? `\n🥘 bringing so far: ${ev.bringing?.length ? ev.bringing.join(", ") : "nothing yet, be the first!"}` : "") +
+      `\n\nreply ${i + 1} to join.`);
   }
 
   private async join(u: UserState, i: number) {
     const ev = this.pickFromList(u, i);
     if (!ev) return this.say(u, "that number isn't on your list. text EVENTS to see this week's picks.");
-    if (u.joined.includes(ev.id)) return this.say(u, `you're already in for ${ev.title}!`);
-    if (ev.going >= ev.capacity) return this.say(u, `${ev.title} just filled up 😭 text MORE for other options.`);
+    return this.joinEvent(u, ev, true);
+  }
+
+  /** Shared by texting and the app. `notify` sends the confirmation text to the person. */
+  async joinEvent(u: UserState, ev: CommunityEvent, notify: boolean) {
+    if (u.joined.includes(ev.id)) return notify ? this.say(u, `you're already in for ${ev.title}!`) : undefined;
+    if (ev.going >= ev.capacity) return notify ? this.say(u, `${ev.title} just filled up 😭 text MORE for other options.`) : undefined;
     ev.going += 1;
     u.joined.push(ev.id);
     this.save();
+    const host = ev.hostUserId ? this.users.get(ev.hostUserId) : undefined;
+    if (host && host.id !== u.id) await this.say(host, `🎉 someone just joined your ${ev.title}! ${ev.going} going now.`);
+    if (!notify) return;
     const others = ev.going - 1;
     return this.say(u,
       `you're in! ${ev.emoji} ${ev.title}\n${longWhen(ev.start)} · ${ev.place}\n` +
       `${others} other${others === 1 ? "" : "s"} going${ev.beginnerFriendly ? ", and it's beginner-friendly" : ""}. I'll text you a reminder before it starts.\n` +
+      (ev.potluck ? `\nit's a potluck! 🥘 reply BRING <dish> so people can see what's coming${ev.bringing?.length ? ` (so far: ${ev.bringing.join(", ")})` : ""}.` : "") +
       (ev.recurring ? `\nit happens ${ev.recurring}, so come a few times and you'll be a regular.` : "") +
       `\n\nwant to bring someone? just forward this text.`);
+  }
+
+  leaveEvent(u: UserState, ev: CommunityEvent) {
+    if (!u.joined.includes(ev.id)) return;
+    u.joined = u.joined.filter((x) => x !== ev.id);
+    ev.going = Math.max(0, ev.going - 1);
+    this.save();
+  }
+
+  // ---------------------------------------------------------------- hosting (everyone brings something)
+  addHosted(input: HostInput, host?: UserState): CommunityEvent {
+    const ev = createHostedEvent({ ...input, hostUserId: host?.id });
+    this.events.push(ev);
+    if (host) host.joined.push(ev.id);
+    this.save();
+    return ev;
+  }
+
+  private async hostByText(u: UserState, text: string) {
+    const r = parseHostText(text, this.clock());
+    if (!r.ok) {
+      const need = r.missing.map((m) => ({ what: "what it is", when: "the day and time", where: "where (a park or neighborhood)" })[m]).join(", ");
+      return this.say(u, `love that you want to host! I still need ${need}. try something like:\nHOST taco potluck sat 6pm cal anderson`);
+    }
+    const ev = this.addHosted(r.input, u);
+    return this.say(u,
+      `posted! ${ev.emoji} ${ev.title}\n${longWhen(ev.start)} · ${ev.place}\n\n` +
+      `it's on the map now and goes out in neighbors' weekly texts. I'll text you when people join.` +
+      (ev.potluck ? `\n\nsince it's a potluck, guests can reply BRING <dish> so you can see what's coming 🥘` : ""));
+  }
+
+  bringTo(u: UserState, ev: CommunityEvent, dish: string) {
+    ev.bringing = [...(ev.bringing ?? []), dish.slice(0, 40)];
+    this.save();
+    if (!u.joined.includes(ev.id)) { u.joined.push(ev.id); ev.going += 1; this.save(); }
+  }
+
+  private async bring(u: UserState, dish: string) {
+    const ev = [...u.joined].reverse().map((id) => this.events.find((e) => e.id === id)!).find((e) => e?.potluck && Date.parse(e.end) > this.clock().getTime());
+    if (!ev) return this.say(u, "join a potluck first, then tell me what you're bringing! text \"something with food\" to find one.");
+    this.bringTo(u, ev, dish);
+    return this.say(u, `yum, noted! 🥘 for ${ev.title} so far: ${ev.bringing!.join(", ")}.`);
+  }
+
+  /** Most recently active texter: the demo app mirrors this person. */
+  get activeUser(): UserState | undefined {
+    return [...this.users.values()].filter((u) => !u.stopped).sort((a, b) => (b.lastActive ?? 0) - (a.lastActive ?? 0))[0];
   }
 
   private async leave(u: UserState, i?: number) {
     const id = i === undefined ? u.joined[u.joined.length - 1] : u.lastList[i];
     if (!id || !u.joined.includes(id)) return this.say(u, "you're not signed up for that one. text MY to see your plans.");
     const ev = this.events.find((e) => e.id === id)!;
-    u.joined = u.joined.filter((x) => x !== id);
-    ev.going = Math.max(0, ev.going - 1);
-    this.save();
+    this.leaveEvent(u, ev);
     return this.say(u, `no problem, you're off the list for ${ev.title}.`);
   }
 
@@ -200,7 +272,7 @@ export class CookingBot {
   }
 
   help() {
-    return "EVENTS: this week's picks · MORE: more picks · 1, 2, 3…: join · INFO 2: details · MY: your plans · LEAVE: drop out · PREFS: change interests · STOP: unsubscribe\n\nor just text a mood, like \"something outdoorsy\".";
+    return "EVENTS: this week's picks · MORE: more picks · 1, 2, 3…: join · INFO 2: details · MY: your plans · LEAVE: drop out · PREFS: change interests · STOP: unsubscribe\n\nHOST taco potluck sat 6pm cal anderson: host your own · BRING <dish>: for potlucks\n\nor just text a mood, like \"something outdoorsy\".";
   }
 
   // ---------------------------------------------------------------- scheduled

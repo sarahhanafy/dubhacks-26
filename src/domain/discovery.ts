@@ -88,6 +88,7 @@ export function rankEvents(events: CommunityEvent[], profile: Profile, now: Date
     if (ev.cost === 0) { score += 0.5; reasons.push("free"); }
     if (ev.beginnerFriendly) { score += 0.5; reasons.push("beginner-friendly"); }
     if (ev.recurring) { score += 0.5; reasons.push(`happens ${ev.recurring}, easy to become a regular`); }
+    if (ev.hostedBy === "neighbor") { score += 0.5; reasons.push(ev.potluck ? "neighbor potluck, bring a dish" : "hosted by a neighbor"); }
     const days = (Date.parse(ev.start) - now.getTime()) / 864e5;
     score += Math.max(0, 1 - days / 7) * 0.5; // slight nudge toward sooner
     picks.push({ event: ev, distanceKm: dist, score: Math.round(score * 100) / 100, reasons });

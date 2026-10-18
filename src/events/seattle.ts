@@ -22,7 +22,13 @@ export interface CommunityEvent {
   beginnerFriendly: boolean;
   recurring?: string; // e.g. "every Sunday"
   blurb: string;
-  isSample: true;
+  isSample: boolean;
+  /** Posted by a neighbor (not an organization). Everyone can host. */
+  hostedBy?: "neighbor";
+  hostUserId?: string;
+  potluck?: boolean;
+  /** Potluck sign-ups: what people said they'll bring. */
+  bringing?: string[];
 }
 
 const e = (x: Omit<CommunityEvent, "isSample">): CommunityEvent => ({ ...x, isSample: true });
@@ -94,6 +100,19 @@ export const EVENTS: CommunityEvent[] = [
   e({ id: "e22", title: "Late-night ramen pop-up", category: "food", emoji: "🍜", host: "Midnight Noodle", neighborhood: "Capitol Hill", place: "Pike/Pine pop-up space", lat: 47.6140, lng: -122.3200,
     start: "2026-10-24T21:00:00-07:00", end: "2026-10-24T23:30:00-07:00", cost: 14, capacity: 30, going: 27, beginnerFriendly: true,
     blurb: "One bowl, one night. Counter seating means you'll end up talking to your neighbor." }),
+  // ---- neighbor-hosted potlucks (anyone can host one)
+  e({ id: "e23", title: "Sunday soup swap potluck", category: "food", emoji: "🥘", host: "Maya, a neighbor", hostedBy: "neighbor", potluck: true,
+    bringing: ["lentil soup", "sourdough", "clementines"], neighborhood: "Capitol Hill", place: "Volunteer Park picnic tables", lat: 47.6290, lng: -122.3160,
+    start: "2026-10-18T17:00:00-07:00", end: "2026-10-18T19:00:00-07:00", cost: 0, capacity: 15, going: 9, beginnerFriendly: true, recurring: "every Sunday",
+    blurb: "Bring a soup (or bread, or just a bowl). Everyone leaves with leftovers and a few new names." }),
+  e({ id: "e24", title: "Dorm-friendly dinner potluck", category: "food", emoji: "🥘", host: "Jordan, a neighbor", hostedBy: "neighbor", potluck: true,
+    bringing: ["rice cooker rice", "kimchi"], neighborhood: "U District", place: "University Heights Center lawn", lat: 47.6620, lng: -122.3135,
+    start: "2026-10-22T18:30:00-07:00", end: "2026-10-22T20:30:00-07:00", cost: 0, capacity: 20, going: 7, beginnerFriendly: true,
+    blurb: "No kitchen? No problem. Bring snacks, a store-bought dessert, or a playlist. Plates provided." }),
+  e({ id: "e25", title: "Pickup soccer + orange slices", category: "sports", emoji: "⚽", host: "Sam, a neighbor", hostedBy: "neighbor",
+    neighborhood: "Ballard", place: "Ballard Commons Park field", lat: 47.6690, lng: -122.3850,
+    start: "2026-10-24T13:00:00-07:00", end: "2026-10-24T15:00:00-07:00", cost: 0, capacity: 18, going: 8, beginnerFriendly: true,
+    blurb: "Casual small-sided games, all levels. Someone always brings orange slices." }),
 ];
 
 /** Neighborhood centers used to place a user from a quick text answer. */

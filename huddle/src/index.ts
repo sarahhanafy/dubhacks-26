@@ -2,6 +2,7 @@ import { Spectrum } from "spectrum-ts";
 import { imessage } from "@spectrum-ts/imessage";
 import { CookingBot, type Transport } from "./bot.js";
 import { parseProfileWithAI } from "./llm.js";
+import { startAppLink } from "./api.js";
 
 // Anyone who texts the What's Cooking number is onboarded (texting first = opt-in).
 // On Photon's shared plan, their number must also be added as a project user in the dashboard.
@@ -32,6 +33,8 @@ const transport: Transport = {
 const bot = new CookingBot(transport, () => new Date(), parseProfileWithAI, "data/huddle.json");
 setInterval(() => bot.tick().catch((e) => console.error("[whats-cooking] tick", e)), 60_000);
 console.log(`[whats-cooking] ready · ${bot.users.size} saved users · AI: ${process.env.OPENROUTER_API_KEY ? "OpenRouter" : process.env.GEMINI_API_KEY ? "Gemini" : "off (rule parser)"}`);
+
+startAppLink(bot);
 
 for await (const [space, message] of app.messages) {
   if (message.direction === "outbound") continue;
