@@ -110,19 +110,19 @@ export function rankEvents(events: CommunityEvent[], profile: Profile, now: Date
 // ---------------------------------------------------------------- onboarding answers
 
 const CATEGORY_WORDS: [Category, RegExp][] = [
-  ["cafe", /\b(cafe|caf[eé]s?|coffee|matcha|tea|pop[- ]?ups?)\b/],
-  ["sports", /\b(sports?|pickleball|basketball|volleyball|run(ning)?|climb(ing)?|soccer|tennis)\b/],
-  ["swim", /\b(swim(ming)?|pool|plunge)\b/],
-  ["outdoors", /\b(outdoors?|hik(e|es|ing)|nature|kayak|paddle|bike|biking|kites?)\b/],
-  ["music", /\b(music|open mic|concerts?|jam|guitar)\b/],
-  ["food", /\b(food|eat(ing)?|cook(ing)?|dumplings?|ramen|food trucks?)\b/],
-  ["art", /\b(art|sketch|draw(ing)?|paint(ing)?|craft)\b/],
-  ["wellness", /\b(yoga|wellness|sauna|meditat(e|ion))\b/],
-  ["community", /\b(community|volunteer(ing)?|board games?|games|meet people)\b/],
+  ["cafe", /\b(caf[eé]s?|coffee\w*|matcha|tea|latte\w*|pop[- ]?ups?|brunch)\b/],
+  ["sports", /\b(sport\w*|pickleball|basketball|hoops|volleyball|run(s|ning|ner)?|climb\w*|bouldering|soccer|tennis|active)\b/],
+  ["swim", /\b(swim\w*|pool|plunge|beach)\b/],
+  ["outdoors", /\b(outdoor\w*|outside|hik(e|es|ing)|nature|trails?|kayak\w*|paddl\w*|bik(e|es|ing)|kites?|parks?|sunset)\b/],
+  ["music", /\b(music\w*|open mic|concerts?|jam\w*|guitar|singing|band)\b/],
+  ["food", /\b(food\w*|eat\w*|cook\w*|dumplings?|ramen|food trucks?|dinner|lunch|snacks?)\b/],
+  ["art", /\b(art\w*|sketch\w*|draw\w*|paint\w*|craft\w*|creative)\b/],
+  ["wellness", /\b(yoga|wellness|sauna|meditat\w*|chill|relax\w*|calm)\b/],
+  ["community", /\b(community|volunteer\w*|board games?|games?|meet people|social|new friends)\b/],
 ];
 
 export function parseInterests(text: string): Category[] {
-  const t = text.toLowerCase();
+  const t = text.toLowerCase().replace(/[’']/g, "");
   return CATEGORY_WORDS.filter(([, re]) => re.test(t)).map(([c]) => c);
 }
 

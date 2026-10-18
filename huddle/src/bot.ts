@@ -79,6 +79,10 @@ export class CookingBot {
     if (u.step !== "ready") return this.onboard(u, text);
 
     if (/^(EVENTS|WEEK|THIS WEEK|DIGEST)$/.test(up)) return this.digest(u, true);
+    if (/^(HI+|HEY+|HELLO|YO|SUP|HIYA|WHATS COOKING\??|WHAT'S COOKING\??)[!. ]*$/.test(up)) {
+      await this.say(u, "hey! here's what's cooking this week 🍳");
+      return this.digest(u, true);
+    }
     if (up === "MORE") return this.digest(u, false);
     if (up === "MY" || up === "MY PLANS" || up === "PLANS") return this.myPlans(u);
     const join = up.match(/^(?:JOIN|GO|RSVP|IN)?\s*#?(\d{1,2})$/);
@@ -91,7 +95,7 @@ export class CookingBot {
     // Anything else: treat as a mood ("something chill tonight") and search with it.
     const extra = parseInterests(text);
     if (extra.length) return this.digest(u, true, extra);
-    return this.say(u, this.help());
+    return this.say(u, "hmm, not sure what you meant. " + this.help());
   }
 
   // ---------------------------------------------------------------- onboarding

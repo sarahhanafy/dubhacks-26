@@ -59,6 +59,8 @@ describe("multiple areas", () => {
 describe("onboarding parsers", () => {
   it("reads free-text answers", () => {
     expect(parseInterests("pickleball, coffee pop ups and hiking")).toEqual(["cafe", "sports", "outdoors"]);
+    expect(parseInterests("something outdoorsy")).toEqual(["outdoors"]);
+    expect(parseInterests("im feeling sporty, maybe swimming")).toEqual(["sports", "swim"]);
     expect(parseArea("I live near the U District")?.label).toBe("U District");
     expect(parseWhen("weekends and weeknight evenings")).toEqual(["weekends", "weekday_evenings"]);
     expect(parseBudget("under $10")).toBe(10);
