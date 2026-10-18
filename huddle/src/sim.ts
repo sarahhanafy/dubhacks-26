@@ -8,7 +8,7 @@ const say = async (t: string) => { console.log(`\x1b[36mme:\x1b[0m ${t}`); await
 
 await say("hi");
 await say("pickleball, coffee pop ups and hiking");
-await say("capitol hill");
+await say("capitol hill and ballard");
 await say("weekends and weeknights, under $15");
 await say("INFO 1");
 await say("1");

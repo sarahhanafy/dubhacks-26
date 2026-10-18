@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { slotOf, parseArea, parseBudget, parseInterests, parseWhen, rankEvents, type Profile } from "../src/domain/discovery.js";
+import { slotOf, parseArea, parseAreas, parseBudget, parseInterests, parseWhen, rankEvents, type Profile } from "../src/domain/discovery.js";
 import { EVENTS } from "../src/events/seattle.js";
 
 const NOW = new Date("2026-10-18T05:00:00.000Z"); // Sat Oct 17, 10 PM PT
@@ -41,6 +41,18 @@ describe("rankEvents", () => {
 
   it("is deterministic", () => {
     expect(rankEvents(EVENTS, base, NOW)).toEqual(rankEvents(EVENTS, base, NOW));
+  });
+});
+
+describe("multiple areas", () => {
+  it("measures distance from the closest area", () => {
+    const one = rankEvents(EVENTS, { ...base, interests: ["wellness"], areas: parseAreas("capitol hill"), maxDistanceKm: 3 }, NOW, { limit: 50 });
+    const two = rankEvents(EVENTS, { ...base, interests: ["wellness"], areas: parseAreas("capitol hill and bellevue"), maxDistanceKm: 3 }, NOW, { limit: 50 });
+    expect(one.some((p) => p.event.id === "e20")).toBe(false); // Bellevue yoga
+    expect(two.some((p) => p.event.id === "e20")).toBe(true);
+  });
+  it("parses several neighborhoods in order", () => {
+    expect(parseAreas("mostly ballard, sometimes cap hill or the u district").map((a) => a.label)).toEqual(["Ballard", "Capitol Hill", "U District"]);
   });
 });
 

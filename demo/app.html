@@ -167,7 +167,7 @@ canvas.confetti { position: absolute; inset: 0; z-index: 45; pointer-events: non
 
 <script>/*CORE*/</script>
 <script>
-const { rankEvents, distanceKm, EVENTS, AREAS } = Core;
+const { rankEvents, nearestArea, areasOf, EVENTS, AREAS } = Core;
 const NOW = new Date("2026-10-18T05:00:00.000Z"); // demo "now": Sat Oct 17, 10 PM PT
 const TZ = "America/Los_Angeles";
 const $ = (s, r = document) => r.querySelector(s);
@@ -183,7 +183,7 @@ const AVC = ["#ffc857","#7fe0c4","#f6a6c1","#a9b8ff","#ffb4a2","#c9a6ff"];
 
 let S;
 function reset() {
-  S = { events: JSON.parse(JSON.stringify(EVENTS)), profile: { interests: ["cafe","sports","outdoors"], home: AREAS["capitol hill"], maxBudget: 20, maxDistanceKm: 8, when: [] },
+  S = { events: JSON.parse(JSON.stringify(EVENTS)), profile: { interests: ["cafe","sports","outdoors"], areas: [AREAS["capitol hill"]], maxBudget: 20, maxDistanceKm: 8, when: [] },
         joined: new Set(), tab: "discover", view: "map", filter: "for-you", texts: null, view0: null };
 }
 reset();
@@ -206,7 +206,9 @@ function visible() {
   return rankEvents(S.events, { ...S.profile, maxDistanceKm: 40, interests: [S.filter] }, NOW, { limit: 99 }).filter((p) => p.event.category === S.filter);
 }
 const ev = (id) => S.events.find((e) => e.id === id);
-const distTo = (e) => (S.profile.home ? distanceKm(S.profile.home, e) : null);
+const distTo = (e) => nearestArea(S.profile, e)?.km ?? null;
+const nearLabel = (e) => nearestArea(S.profile, e)?.area.label;
+function whereLabel() { const a = areasOf(S.profile).map((x) => x.label); return !a.length ? "you" : a.length <= 2 ? a.join(" + ") : `${a[0]} + ${a.length - 1} more`; }
 
 // ------------------------------------------------------------ 1. onboarding
 function onboarding(step) {
@@ -215,8 +217,8 @@ function onboarding(step) {
   let body = "";
   if (step === 0) body = `<div class="rise"><div class="kicker">welcome to huddle</div><h1>what are you <em>into?</em></h1></div>
     <div class="chipset">${CATS.map(([c, e, l]) => `<button class="pick ${S.profile.interests.includes(c) ? "on" : ""}" data-c="${c}">${e} ${l}</button>`).join("")}</div>`;
-  if (step === 1) body = `<div class="rise"><div class="kicker">so we can find things close by</div><h1>where do you <em>hang out?</em></h1></div>
-    <div class="chipset">${HOODS.map((h) => `<button class="pick ${S.profile.home?.label === h ? "on" : ""}" data-h="${h}">📍 ${h}</button>`).join("")}</div>`;
+  if (step === 1) body = `<div class="rise"><div class="kicker">pick as many as you like</div><h1>where do you <em>hang out?</em></h1></div>
+    <div class="chipset">${HOODS.map((h) => `<button class="pick ${areasOf(S.profile).some((a) => a.label === h) ? "on" : ""}" data-h="${h}">📍 ${h}</button>`).join("")}</div>`;
   if (step === 2) body = `<div class="rise"><div class="kicker">last one</div><h1>when are you <em>free?</em></h1></div>
     <div class="chipset">${WHEN.map(([w, l]) => `<button class="pick ${S.profile.when.includes(w) ? "on" : ""}" data-w="${w}">${l}</button>`).join("")}</div>
     <div class="label">budget per event</div>
@@ -226,7 +228,8 @@ function onboarding(step) {
   $(".onb").addEventListener("click", (e) => {
     const b = e.target.closest(".pick"); if (!b) return;
     if (b.dataset.c) { const set = new Set(S.profile.interests); set.has(b.dataset.c) ? set.delete(b.dataset.c) : set.add(b.dataset.c); S.profile.interests = [...set]; b.classList.toggle("on"); }
-    if (b.dataset.h) { S.profile.home = AREAS[b.dataset.h.toLowerCase()]; document.querySelectorAll("[data-h]").forEach((x) => x.classList.toggle("on", x === b)); }
+    if (b.dataset.h) { const a = AREAS[b.dataset.h.toLowerCase()], cur = areasOf(S.profile), has = cur.some((x) => x.label === a.label);
+      S.profile.areas = has ? cur.filter((x) => x.label !== a.label) : [...cur, a]; S.profile.home = undefined; b.classList.toggle("on", !has); }
     if (b.dataset.w) { const set = new Set(S.profile.when); set.has(b.dataset.w) ? set.delete(b.dataset.w) : set.add(b.dataset.w); S.profile.when = [...set]; b.classList.toggle("on"); }
     if (b.dataset.b) { S.profile.maxBudget = BUDGETS[+b.dataset.b][0]; document.querySelectorAll("[data-b]").forEach((x) => x.classList.toggle("on", x === b)); }
     $("#next").disabled = step === 0 && !S.profile.interests.length;
@@ -251,7 +254,7 @@ function discover() {
   const chips = [["for-you","✨ for you"], ...CATS.map(([c, e]) => [c, `${e} ${c}`])];
   screen(`
     <div class="top">
-      <div><div class="kicker">this week near ${S.profile.home?.label ?? "you"}</div><h1>what's <em>happening</em></h1></div>
+      <div><div class="kicker">this week near ${whereLabel()}</div><h1>what's <em>happening</em></h1></div>
       <div class="seg"><button data-v="map" class="${S.view === "map" ? "on" : ""}">Map</button><button data-v="list" class="${S.view === "list" ? "on" : ""}">List</button></div>
       <div class="filters">${chips.map(([k, l]) => `<button data-f="${k}" class="${S.filter === k ? "on" : ""}">${l}</button>`).join("")}</div>
     </div>
@@ -301,7 +304,12 @@ const COLORS = { cafe:"#e9a66b", sports:"#ff9a59", swim:"#5aa9ff", outdoors:"#56
 function drawMap() {
   const picks = visible(), shown = new Set(picks.map((p) => p.event.id));
   const body = $("#body"), W = 390, H = Math.max(300, body.clientHeight || 520);
-  if (!S.view0) { const [hx, hy] = S.profile.home ? P(S.profile.home.lat, S.profile.home.lng) : P(47.63, -122.33); S.view0 = { x: hx - 70, y: hy - 70 * H / W, w: 140, h: 140 * H / W }; }
+  if (!S.view0) { // fit all of the person's areas, with room around them
+    const pts = (areasOf(S.profile).length ? areasOf(S.profile) : [{ lat: 47.63, lng: -122.33 }]).map((a) => P(a.lat, a.lng));
+    const xs = pts.map((p) => p[0]), ys = pts.map((p) => p[1]);
+    const cx = (Math.min(...xs) + Math.max(...xs)) / 2, cy = (Math.min(...ys) + Math.max(...ys)) / 2;
+    const w = Math.min(420, Math.max(140, (Math.max(...xs) - Math.min(...xs)) * 1.6, (Math.max(...ys) - Math.min(...ys)) * 1.6 * W / H));
+    S.view0 = { x: cx - w / 2, y: cy - (w * H / W) / 2, w, h: w * H / W }; }
   const v = S.view0, k = v.w / 140;
   const pins = S.events.filter((e) => Date.parse(e.start) > NOW.getTime()).map((e) => {
     const [x, y] = P(e.lat, e.lng), on = shown.has(e.id), r = 8 * k;
@@ -309,8 +317,8 @@ function drawMap() {
       ${S.joined.has(e.id) ? `<circle class="ring" r="${r + 3 * k}" stroke-width="${1.8 * k}"/>` : ""}
       <circle class="bg" r="${r}" fill="${COLORS[e.category]}" stroke-width="${2 * k}"/>
       <text style="font-size:${9.5 * k}px">${e.emoji}</text></g>`; }).join("");
-  const home = S.profile.home ? (() => { const [x, y] = P(S.profile.home.lat, S.profile.home.lng);
-    return `<g class="me" transform="translate(${x},${y})"><circle class="pulse" r="${7 * k}"/><circle r="${4 * k}" fill="#ff7a59" stroke="#fff" stroke-width="${1.4 * k}"/></g>`; })() : "";
+  const home = areasOf(S.profile).map((a) => { const [x, y] = P(a.lat, a.lng);
+    return `<g class="me" transform="translate(${x},${y})"><circle class="pulse" r="${7 * k}"/><circle r="${4 * k}" fill="#ff7a59" stroke="#fff" stroke-width="${1.4 * k}"/></g>`; }).join("");
   const [gx, gy] = P(47.6805, -122.336);
   body.innerHTML = `<div class="map" id="map">
     <div class="maplegend">${picks.length} ${S.filter === "for-you" ? "picks for you" : S.filter} · sample events</div>
@@ -360,7 +368,7 @@ function openSheet(id) {
     <div><div class="kicker">${e.host}</div><h2>${e.title}</h2></div>
     <div class="facts">
       <div>🗓 ${fmt(e.start, { weekday: "long", month: "short", day: "numeric" })} · ${time(e.start)} – ${time(e.end)}</div>
-      <div>📍 ${e.place}, ${e.neighborhood}${d != null ? ` <span>· ${d.toFixed(1)} km from ${S.profile.home.label}</span>` : ""}</div>
+      <div>📍 ${e.place}, ${e.neighborhood}${d != null ? ` <span>· ${d.toFixed(1)} km from ${nearLabel(e)}</span>` : ""}</div>
       <div>💸 ${price(e.cost)}${e.beginnerFriendly ? " <span>· beginner-friendly</span>" : ""}</div></div>
     <div style="font-size:14px;line-height:1.5;color:#d9d4cc">${e.blurb}</div>
     <div class="people"><div class="avs">${avs}</div><span id="cnt">${e.going} going · ${e.capacity - e.going} spots left</span></div>
@@ -404,7 +412,7 @@ function week() {
 // ------------------------------------------------------------ 6. the weekly iMessage
 const esc = (t) => t.replace(/&/g, "&amp;").replace(/</g, "&lt;");
 function digestText(picks) {
-  return `🗓 your week near ${S.profile.home?.label ?? "you"} (sample events)\n\n` +
+  return `🗓 your week near ${whereLabel()} (sample events)\n\n` +
     picks.map((p, i) => `${i + 1}. ${p.event.emoji} ${p.event.title}\n   ${dayShort(p.event.start)} ${time(p.event.start)} · ${p.event.neighborhood} · ${price(p.event.cost)} · ${p.event.going} going`).join("\n\n") +
     "\n\nreply a number to join (like 1), INFO 2 for details, or MORE.";
 }

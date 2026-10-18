@@ -2,7 +2,7 @@
 // Transport-agnostic so it can be tested with a fake (see sim.ts).
 
 import { readFileSync, writeFileSync, mkdirSync } from "node:fs";
-import { rankEvents, parseArea, parseBudget, parseInterests, parseWhen, type Pick, type Profile } from "../../src/domain/discovery.js";
+import { rankEvents, parseAreas, parseBudget, parseInterests, parseWhen, type Pick, type Profile } from "../../src/domain/discovery.js";
 import { EVENTS, type CommunityEvent } from "../../src/events/seattle.js";
 
 export interface Transport { dm(userId: string, text: string): Promise<void> }
@@ -103,16 +103,18 @@ export class HuddleBot {
       u.profile.interests = interests;
       u.step = "area";
       this.save();
-      return this.say(u, `love that: ${interests.join(", ")}. which neighborhood are you usually around? (e.g. Capitol Hill, U District, Ballard, Bellevue)`);
+      return this.say(u, `love that: ${interests.join(", ")}. which neighborhoods are you usually around? list as many as you like (e.g. Capitol Hill, U District, Ballard, Bellevue)`);
     }
     if (u.step === "area") {
-      const home = llm.home ?? parseArea(text);
-      if (!home) return this.say(u, "I didn't catch that one. try a Seattle-area neighborhood like Fremont, Queen Anne, U District or Bellevue.");
-      u.profile.home = home;
+      const parsed = parseAreas(text);
+      const areas = parsed.length ? parsed : llm.home ? [llm.home] : [];
+      if (!areas.length) return this.say(u, "I didn't catch that one. try Seattle-area neighborhoods like Fremont, Queen Anne, U District or Bellevue (you can list a few).");
+      u.profile.areas = areas;
+      u.profile.home = areas[0];
       u.profile.maxDistanceKm = 8;
       u.step = "when";
       this.save();
-      return this.say(u, `got it, ${home.label}. last one: when are you usually free, and any budget? (e.g. "weekends and weeknights, under $15")`);
+      return this.say(u, `got it: ${areas.map((a) => a.label).join(", ")}. last one: when are you usually free, and any budget? (e.g. "weekends and weeknights, under $15")`);
     }
     if (u.step === "when") {
       u.profile.when = llm.when ?? parseWhen(text);
@@ -142,7 +144,7 @@ export class HuddleBot {
     const lines = picks.map((p, i) =>
       `${i + 1}. ${p.event.emoji} ${p.event.title}\n   ${when(p.event.start)} · ${p.event.neighborhood} · ${price(p.event.cost)} · ${p.event.going} going`);
     return this.say(u,
-      `🗓 your week near ${u.profile.home?.label ?? "you"} (sample events)\n\n${lines.join("\n\n")}\n\n` +
+      `🗓 your week near ${(u.profile.areas?.length ? u.profile.areas : u.profile.home ? [u.profile.home] : []).map((a) => a.label).join(" + ") || "you"} (sample events)\n\n${lines.join("\n\n")}\n\n` +
       `reply a number to join (like 1), INFO 2 for details, or MORE.`);
   }
 

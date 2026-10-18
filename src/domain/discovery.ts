@@ -3,9 +3,14 @@
 
 import { AREAS, type Category, type CommunityEvent } from "../events/seattle.js";
 
+export interface Area { lat: number; lng: number; label: string }
+
 export interface Profile {
   interests: Category[];
-  home?: { lat: number; lng: number; label: string };
+  /** Neighborhoods they hang out in. Distance is measured from the closest one. */
+  areas?: Area[];
+  /** Legacy single area; used when `areas` is empty. */
+  home?: Area;
   maxBudget?: number;
   maxDistanceKm?: number;
   /** When they're usually free. Empty = any time. */
@@ -34,6 +39,20 @@ function localParts(iso: string, tz = "America/Los_Angeles") {
   return { wd, hour: +p.find((x) => x.type === "hour")!.value };
 }
 
+export function areasOf(p: Profile): Area[] {
+  return p.areas?.length ? p.areas : p.home ? [p.home] : [];
+}
+
+/** Closest of the person's areas to a point. */
+export function nearestArea(p: Profile, pt: { lat: number; lng: number }): { km: number; area: Area } | undefined {
+  let best: { km: number; area: Area } | undefined;
+  for (const area of areasOf(p)) {
+    const km = distanceKm(area, pt);
+    if (!best || km < best.km) best = { km, area };
+  }
+  return best;
+}
+
 export function slotOf(iso: string): Profile["when"][number] | "weekday_daytime" {
   const { wd, hour } = localParts(iso);
   if (wd === 0 || wd === 6) return "weekends";
@@ -54,7 +73,8 @@ export function rankEvents(events: CommunityEvent[], profile: Profile, now: Date
     if (profile.beginnerOnly && !ev.beginnerFriendly) continue;
     const slot = slotOf(ev.start);
     if (profile.when.length && !profile.when.includes(slot as Profile["when"][number])) continue;
-    const dist = profile.home ? distanceKm(profile.home, ev) : undefined;
+    const near = nearestArea(profile, ev);
+    const dist = near?.km;
     if (dist !== undefined && profile.maxDistanceKm !== undefined && dist > profile.maxDistanceKm) continue;
 
     // ---- score (higher is better)
@@ -63,7 +83,7 @@ export function rankEvents(events: CommunityEvent[], profile: Profile, now: Date
     if (profile.interests.includes(ev.category)) { score += 3; reasons.push(`you're into ${ev.category}`); }
     if (dist !== undefined) {
       score += Math.max(0, 2 - dist / 4); // full credit nearby, fades by ~8 km
-      if (dist < 3) reasons.push(`${dist.toFixed(1)} km from ${profile.home!.label}`);
+      if (dist < 3) reasons.push(`${dist.toFixed(1)} km from ${near!.area.label}`);
     }
     if (ev.cost === 0) { score += 0.5; reasons.push("free"); }
     if (ev.beginnerFriendly) { score += 0.5; reasons.push("beginner-friendly"); }
@@ -106,10 +126,23 @@ export function parseInterests(text: string): Category[] {
   return CATEGORY_WORDS.filter(([, re]) => re.test(t)).map(([c]) => c);
 }
 
-export function parseArea(text: string): Profile["home"] | undefined {
-  const t = text.toLowerCase().replace(/[^a-z ]/g, " ").replace(/\s+/g, " ");
-  const key = Object.keys(AREAS).sort((a, b) => b.length - a.length).find((k) => t.includes(k));
-  return key ? AREAS[key] : undefined;
+/** Every neighborhood mentioned, in the order written ("ballard and cap hill" → two areas). */
+export function parseAreas(text: string): Area[] {
+  let t = " " + text.toLowerCase().replace(/[^a-z ]/g, " ").replace(/\s+/g, " ") + " ";
+  t = t.replace(/ cap hill /g, " capitol hill ");
+  const found: { at: number; area: Area }[] = [];
+  for (const key of Object.keys(AREAS).sort((a, b) => b.length - a.length)) {
+    const at = t.indexOf(` ${key} `);
+    if (at < 0) continue;
+    t = t.slice(0, at) + " ".repeat(key.length + 1) + t.slice(at + key.length + 1); // don't re-match inside a longer name
+    const area = AREAS[key]!;
+    if (!found.some((f) => f.area.label === area.label)) found.push({ at, area });
+  }
+  return found.sort((a, b) => a.at - b.at).map((f) => f.area);
+}
+
+export function parseArea(text: string): Area | undefined {
+  return parseAreas(text)[0];
 }
 
 export function parseWhen(text: string): Profile["when"] {
