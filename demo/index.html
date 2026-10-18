@@ -148,6 +148,28 @@ canvas.confetti { position: absolute; inset: 0; z-index: 45; pointer-events: non
 .c-cafe { background: #f6e6d3; } .c-sports { background: #f9dcdc; } .c-swim { background: #dcebf4; } .c-outdoors { background: #dfecd8; }
 .c-music { background: #e9e0f4; } .c-food { background: #f8dfe4; } .c-art { background: #f6e1ec; } .c-wellness { background: #dcefe8; } .c-community { background: #f6edd2; }
 
+/* ---- hosting, potlucks, live link */
+.fab { all: unset; cursor: pointer; position: absolute; right: 18px; bottom: 92px; z-index: 11; padding: 13px 18px; border-radius: 999px; background: var(--sage); color: #fff; font-weight: 900; font-size: 14px; box-shadow: 0 10px 24px #6f8c6b55; animation: pop .5s .3s both; }
+.fab:active { transform: scale(.96); } .fab:focus-visible { outline: 3px solid var(--accent); outline-offset: 3px; }
+.field { width: 100%; box-sizing: border-box; border: 1.5px solid var(--line); background: var(--card); border-radius: 16px; padding: 13px 14px; font: 700 16px var(--body); color: var(--text); outline: none; }
+.field:focus { border-color: var(--sage); }
+.field::placeholder { color: #c2b9ae; }
+.hostgrid { display: grid; gap: 10px; }
+.chipset.sm .pick { padding: 8px 12px; font-size: 13px; }
+.pin.nb circle.bg { stroke: #d98a9a; }
+.pin.fresh circle.bg { animation: fresh 1.2s ease-in-out 3; transform-box: fill-box; transform-origin: center; }
+@keyframes fresh { 50% { transform: scale(1.35); } }
+.potluck { background: var(--blush-3); border-radius: 20px; padding: 12px 14px; display: grid; gap: 8px; }
+.dishes { display: flex; flex-wrap: wrap; gap: 6px; }
+.dish { padding: 6px 11px; border-radius: 999px; background: #fff; font-size: 12.5px; font-weight: 800; color: #8c4b5a; animation: pop .35s both; }
+.bringform { display: grid; grid-template-columns: 1fr auto; gap: 8px; }
+.bringform .field { padding: 10px 12px; font-size: 14px; }
+.bringform button { all: unset; cursor: pointer; padding: 0 16px; border-radius: 999px; background: var(--accent); color: #fff; font-weight: 900; font-size: 13px; }
+.livepill { display: none; justify-self: start; align-items: center; gap: 8px; padding: 8px 14px; border-radius: 999px; background: #ffffffcc; font-weight: 800; font-size: 13px; color: #4f6b4c; box-shadow: var(--shadow); }
+.livepill i { width: 8px; height: 8px; border-radius: 50%; background: #6fbf73; animation: blink 1.6s infinite; }
+@keyframes blink { 50% { opacity: .3; } }
+.is-live .livepill { display: inline-flex; }
+
 /* ---- autoplay demo reel */
 .playbtn { all: unset; cursor: pointer; justify-self: start; padding: 12px 20px; border-radius: 999px; background: var(--text); color: #fff; font-weight: 800; font-size: 14px; box-shadow: var(--shadow); }
 .playbtn:focus-visible { outline: 3px solid var(--accent); outline-offset: 3px; }
@@ -175,7 +197,8 @@ canvas.confetti { position: absolute; inset: 0; z-index: 45; pointer-events: non
 <div class="stage">
   <aside class="rail">
     <div><div class="brand">what's <span>cooking</span></div>
-      <div class="tag">every week, a few things happening near you. tap to show up, keep showing up, find your people.</div></div>
+      <div class="tag">a few things happening near you, every week. show up, host your own, and bring something to the table.</div></div>
+    <div class="livepill" id="livepill"><i></i>live · synced with the iMessage bot</div>
     <ol class="steps" id="steps"></ol>
     <button class="playbtn" id="play">▶ play demo reel</button>
     <div class="cap" id="cap"></div>
@@ -191,10 +214,10 @@ canvas.confetti { position: absolute; inset: 0; z-index: 45; pointer-events: non
   </div></div>
 </div>
 
-<script>"use strict";var Core=(()=>{var m=Object.defineProperty;var P=Object.getOwnPropertyDescriptor;var C=Object.getOwnPropertyNames;var F=Object.prototype.hasOwnProperty;var x=(t,e)=>{for(var a in e)m(t,a,{get:e[a],enumerable:!0})},A=(t,e,a,i)=>{if(e&&typeof e=="object"||typeof e=="function")for(let o of C(e))!F.call(t,o)&&o!==a&&m(t,o,{get:()=>e[o],enumerable:!(i=P(e,o))||i.enumerable});return t};var j=t=>A(m({},"__esModule",{value:!0}),t);var M={};x(M,{AREAS:()=>h,EVENTS:()=>v,areasOf:()=>y,distanceKm:()=>p,nearestArea:()=>f,rankEvents:()=>T,slotOf:()=>k});var r=t=>({...t,isSample:!0}),v=[r({id:"e01",title:"Pop-up pour-over bar",category:"cafe",emoji:"\u2615",host:"Drift Coffee pop-up",neighborhood:"Capitol Hill",place:"Cal Anderson Park",lat:47.617,lng:-122.3191,start:"2026-10-18T09:00:00-07:00",end:"2026-10-18T12:00:00-07:00",cost:5,capacity:40,going:23,beginnerFriendly:!0,recurring:"every Sunday",blurb:"Rotating single-origin pours from a cart, plus a shared table for strangers to sit together."}),r({id:"e02",title:"Open-play pickleball",category:"sports",emoji:"\u{1F3D3}",host:"Green Lake Paddlers",neighborhood:"Green Lake",place:"Green Lake Park courts",lat:47.6805,lng:-122.329,start:"2026-10-18T14:00:00-07:00",end:"2026-10-18T16:00:00-07:00",cost:0,capacity:16,going:11,beginnerFriendly:!0,recurring:"every Sunday",blurb:"Rotate partners every game. Loaner paddles at the bench, no experience needed."}),r({id:"e03",title:"Discovery Park sunset hike",category:"outdoors",emoji:"\u{1F97E}",host:"Trailheads Seattle",neighborhood:"Magnolia",place:"Discovery Park lighthouse loop",lat:47.6573,lng:-122.4059,start:"2026-10-18T16:30:00-07:00",end:"2026-10-18T18:30:00-07:00",cost:0,capacity:25,going:14,beginnerFriendly:!0,blurb:"Easy 3-mile loop down to the beach for sunset. Group walks at a chatty pace."}),r({id:"e04",title:"Cold plunge + sauna social",category:"wellness",emoji:"\u{1F9D6}",host:"Salt & Steam collective",neighborhood:"Ballard",place:"Golden Gardens Park",lat:47.692,lng:-122.4034,start:"2026-10-19T07:00:00-07:00",end:"2026-10-19T08:30:00-07:00",cost:12,capacity:12,going:9,beginnerFriendly:!1,recurring:"every Monday",blurb:"Mobile sauna on the beach, a quick dip in the Sound, then coffee by the fire."}),r({id:"e05",title:"Beginner lap swim meetup",category:"swim",emoji:"\u{1F3CA}",host:"Lap Lane Club",neighborhood:"Queen Anne",place:"Queen Anne Pool",lat:47.6378,lng:-122.3604,start:"2026-10-19T18:30:00-07:00",end:"2026-10-19T19:30:00-07:00",cost:6,capacity:20,going:8,beginnerFriendly:!0,recurring:"every Monday",blurb:"Coach-led drills for newer swimmers, split into lanes by pace. Pool entry fee only."}),r({id:"e06",title:"Run club + bagels",category:"sports",emoji:"\u{1F3C3}",host:"Fremont Run Crew",neighborhood:"Fremont",place:"Fremont Troll",lat:47.651,lng:-122.3473,start:"2026-10-20T18:00:00-07:00",end:"2026-10-20T19:15:00-07:00",cost:0,capacity:60,going:37,beginnerFriendly:!0,recurring:"every Tuesday",blurb:"3 or 5 miles along the Burke-Gilman, no one gets dropped. Bagels after."}),r({id:"e07",title:"Board game night",category:"community",emoji:"\u{1F3B2}",host:"U District Tabletop",neighborhood:"U District",place:"University Heights Center",lat:47.6625,lng:-122.314,start:"2026-10-20T19:00:00-07:00",end:"2026-10-20T22:00:00-07:00",cost:3,capacity:50,going:26,beginnerFriendly:!0,recurring:"every Tuesday",blurb:"Hundreds of games and volunteers who teach. Come solo, you'll get seated with a table."}),r({id:"e08",title:"Open mic & acoustic jam",category:"music",emoji:"\u{1F3B8}",host:"Wallingford Sessions",neighborhood:"Wallingford",place:"Meridian Park",lat:47.66,lng:-122.3335,start:"2026-10-21T19:00:00-07:00",end:"2026-10-21T21:00:00-07:00",cost:0,capacity:40,going:15,beginnerFriendly:!0,blurb:"Sign up for a two-song slot or just sit in the circle and listen."}),r({id:"e09",title:"Pop-up dumpling workshop",category:"food",emoji:"\u{1F95F}",host:"Fold & Pleat kitchen",neighborhood:"Chinatown-ID",place:"Hing Hay Park",lat:47.5985,lng:-122.3248,start:"2026-10-21T18:00:00-07:00",end:"2026-10-21T20:00:00-07:00",cost:15,capacity:18,going:16,beginnerFriendly:!0,blurb:"Learn three folds, then eat everything you made. Veggie filling available."}),r({id:"e10",title:"Drop-in volleyball",category:"sports",emoji:"\u{1F3D0}",host:"Alki Sand Crew",neighborhood:"West Seattle",place:"Alki Beach courts",lat:47.579,lng:-122.41,start:"2026-10-22T17:30:00-07:00",end:"2026-10-22T19:30:00-07:00",cost:0,capacity:24,going:12,beginnerFriendly:!1,recurring:"every Thursday",blurb:"Pickup doubles and fours on the sand while there's light."}),r({id:"e11",title:"Sketch & sip",category:"art",emoji:"\u{1F3A8}",host:"Pencil Pushers",neighborhood:"Capitol Hill",place:"Volunteer Park conservatory lawn",lat:47.6301,lng:-122.315,start:"2026-10-22T18:00:00-07:00",end:"2026-10-22T20:00:00-07:00",cost:8,capacity:30,going:19,beginnerFriendly:!0,blurb:"Supplies and tea provided. A short prompt, then everyone shares (or doesn't)."}),r({id:"e12",title:"Lake Union paddle",category:"outdoors",emoji:"\u{1F6F6}",host:"Northwest Paddlers",neighborhood:"South Lake Union",place:"Lake Union Park",lat:47.627,lng:-122.337,start:"2026-10-23T17:00:00-07:00",end:"2026-10-23T19:00:00-07:00",cost:20,capacity:14,going:10,beginnerFriendly:!0,blurb:"Guided kayak loop past the houseboats. Boats and life jackets included."}),r({id:"e13",title:"Friday night food truck meet",category:"food",emoji:"\u{1F32E}",host:"Rolling Plates",neighborhood:"Ballard",place:"Ballard Commons Park",lat:47.6687,lng:-122.3842,start:"2026-10-23T17:30:00-07:00",end:"2026-10-23T20:30:00-07:00",cost:12,capacity:200,going:64,beginnerFriendly:!0,recurring:"every Friday",blurb:"Six trucks, long communal tables, and a playlist anyone can add to."}),r({id:"e14",title:"Climbing intro night",category:"sports",emoji:"\u{1F9D7}",host:"Send It Social",neighborhood:"Fremont",place:"Fremont climbing gym (sample)",lat:47.649,lng:-122.35,start:"2026-10-23T19:00:00-07:00",end:"2026-10-23T21:00:00-07:00",cost:18,capacity:20,going:13,beginnerFriendly:!0,blurb:"Gear and a belay lesson included. You'll be paired with a climbing buddy."}),r({id:"e15",title:"Saturday market volunteer shift",category:"community",emoji:"\u{1F33B}",host:"Neighbors Feeding Neighbors",neighborhood:"U District",place:"University Way farmers market",lat:47.6655,lng:-122.313,start:"2026-10-24T09:00:00-07:00",end:"2026-10-24T12:00:00-07:00",cost:0,capacity:15,going:7,beginnerFriendly:!0,recurring:"every Saturday",blurb:"Help collect and sort surplus produce for local food banks. Snacks on us."}),r({id:"e16",title:"Gas Works kite flying",category:"outdoors",emoji:"\u{1FA81}",host:"Wind & Wonder",neighborhood:"Wallingford",place:"Gas Works Park hill",lat:47.6456,lng:-122.3344,start:"2026-10-24T11:00:00-07:00",end:"2026-10-24T13:00:00-07:00",cost:0,capacity:80,going:31,beginnerFriendly:!0,blurb:"Bring a kite or borrow one. Best wind is on top of the hill."}),r({id:"e17",title:"Open-water swim (wetsuits)",category:"swim",emoji:"\u{1F30A}",host:"Sound Swimmers",neighborhood:"West Seattle",place:"Alki Beach",lat:47.581,lng:-122.407,start:"2026-10-24T08:00:00-07:00",end:"2026-10-24T09:30:00-07:00",cost:0,capacity:30,going:18,beginnerFriendly:!1,recurring:"every Saturday",blurb:"Buddy system, kayak spotter, hot drinks after. Wetsuit strongly recommended in October."}),r({id:"e18",title:"Matcha pop-up + journaling",category:"cafe",emoji:"\u{1F375}",host:"Slow Morning pop-up",neighborhood:"Fremont",place:"Fremont Sunday market lot",lat:47.6505,lng:-122.35,start:"2026-10-24T10:00:00-07:00",end:"2026-10-24T12:00:00-07:00",cost:7,capacity:25,going:12,beginnerFriendly:!0,blurb:"Whisked-to-order matcha and a shared table with journaling prompts."}),r({id:"e19",title:"Pickup basketball",category:"sports",emoji:"\u{1F3C0}",host:"Cal Anderson Hoops",neighborhood:"Capitol Hill",place:"Cal Anderson Park court",lat:47.6165,lng:-122.3185,start:"2026-10-24T14:00:00-07:00",end:"2026-10-24T16:00:00-07:00",cost:0,capacity:20,going:14,beginnerFriendly:!1,recurring:"every Saturday",blurb:"Run fives, winners stay. All skill levels show up, games stay friendly."}),r({id:"e20",title:"Bellevue lakeside yoga",category:"wellness",emoji:"\u{1F9D8}",host:"Flow Outside",neighborhood:"Bellevue",place:"Meydenbauer Bay Park",lat:47.6145,lng:-122.208,start:"2026-10-24T09:30:00-07:00",end:"2026-10-24T10:30:00-07:00",cost:10,capacity:30,going:17,beginnerFriendly:!0,recurring:"every Saturday",blurb:"Gentle all-levels flow on the lawn. Mats available to borrow."}),r({id:"e21",title:"Redmond trail bike ride",category:"outdoors",emoji:"\u{1F6B2}",host:"Eastside Spokes",neighborhood:"Redmond",place:"Marymoor Park",lat:47.662,lng:-122.121,start:"2026-10-18T10:00:00-07:00",end:"2026-10-18T12:00:00-07:00",cost:0,capacity:30,going:12,beginnerFriendly:!0,blurb:"Casual 15-mile out-and-back on the Sammamish River Trail. Coffee stop halfway."}),r({id:"e22",title:"Late-night ramen pop-up",category:"food",emoji:"\u{1F35C}",host:"Midnight Noodle",neighborhood:"Capitol Hill",place:"Pike/Pine pop-up space",lat:47.614,lng:-122.32,start:"2026-10-24T21:00:00-07:00",end:"2026-10-24T23:30:00-07:00",cost:14,capacity:30,going:27,beginnerFriendly:!0,blurb:"One bowl, one night. Counter seating means you'll end up talking to your neighbor."})],h={"capitol hill":{lat:47.6253,lng:-122.3222,label:"Capitol Hill"},"u district":{lat:47.6615,lng:-122.313,label:"U District"},udistrict:{lat:47.6615,lng:-122.313,label:"U District"},uw:{lat:47.6553,lng:-122.3035,label:"UW"},ballard:{lat:47.6687,lng:-122.384,label:"Ballard"},fremont:{lat:47.651,lng:-122.35,label:"Fremont"},wallingford:{lat:47.6615,lng:-122.334,label:"Wallingford"},"green lake":{lat:47.68,lng:-122.329,label:"Green Lake"},"queen anne":{lat:47.637,lng:-122.357,label:"Queen Anne"},downtown:{lat:47.6062,lng:-122.3321,label:"Downtown"},"south lake union":{lat:47.6256,lng:-122.3344,label:"South Lake Union"},slu:{lat:47.6256,lng:-122.3344,label:"South Lake Union"},"west seattle":{lat:47.57,lng:-122.386,label:"West Seattle"},bellevue:{lat:47.6101,lng:-122.2015,label:"Bellevue"},redmond:{lat:47.674,lng:-122.1215,label:"Redmond"},kirkland:{lat:47.6769,lng:-122.206,label:"Kirkland"}};var u=t=>t*Math.PI/180;function p(t,e){let i=u(e.lat-t.lat),o=u(e.lng-t.lng),d=Math.sin(i/2)**2+Math.cos(u(t.lat))*Math.cos(u(e.lat))*Math.sin(o/2)**2;return 2*6371*Math.asin(Math.sqrt(d))}function D(t,e="America/Los_Angeles"){let a=new Intl.DateTimeFormat("en-US",{timeZone:e,weekday:"short",hour:"numeric",hourCycle:"h23"}).formatToParts(new Date(t));return{wd:["Sun","Mon","Tue","Wed","Thu","Fri","Sat"].indexOf(a.find(o=>o.type==="weekday").value),hour:+a.find(o=>o.type==="hour").value}}function y(t){return t.areas?.length?t.areas:t.home?[t.home]:[]}function f(t,e){let a;for(let i of y(t)){let o=p(i,e);(!a||o<a.km)&&(a={km:o,area:i})}return a}function k(t){let{wd:e,hour:a}=D(t);return e===0||e===6?"weekends":a<10?"weekday_mornings":a>=17?"weekday_evenings":"weekday_daytime"}function T(t,e,a,i={}){let o=[];for(let n of t){if(Date.parse(n.start)<=a.getTime()||Date.parse(n.start)>a.getTime()+8*864e5||i.excludeIds?.has(n.id)||n.going>=n.capacity||e.maxBudget!==void 0&&n.cost>e.maxBudget||e.beginnerOnly&&!n.beginnerFriendly)continue;let l=k(n.start);if(e.when.length&&!e.when.includes(l))continue;let w=f(e,n),s=w?.km;if(s!==void 0&&e.maxDistanceKm!==void 0&&s>e.maxDistanceKm)continue;let g=[],c=0;e.interests.includes(n.category)&&(c+=3,g.push(`you're into ${n.category}`)),s!==void 0&&(c+=Math.max(0,2-s/4),s<3&&g.push(`${s.toFixed(1)} km from ${w.area.label}`)),n.cost===0&&(c+=.5,g.push("free")),n.beginnerFriendly&&(c+=.5,g.push("beginner-friendly")),n.recurring&&(c+=.5,g.push(`happens ${n.recurring}, easy to become a regular`));let S=(Date.parse(n.start)-a.getTime())/864e5;c+=Math.max(0,1-S/7)*.5,o.push({event:n,distanceKm:s,score:Math.round(c*100)/100,reasons:g})}o.sort((n,l)=>l.score-n.score||Date.parse(n.event.start)-Date.parse(l.event.start)||n.event.id.localeCompare(l.event.id));let d=new Map,b=[];for(let n of o){let l=d.get(n.event.category)??0;if(!(l>=2)&&(d.set(n.event.category,l+1),b.push(n),b.length===(i.limit??5)))break}return b}return j(M);})();
+<script>"use strict";var Core=(()=>{var C=Object.defineProperty;var I=Object.getOwnPropertyDescriptor;var M=Object.getOwnPropertyNames;var L=Object.prototype.hasOwnProperty;var O=(t,e)=>{for(var n in e)C(t,n,{get:e[n],enumerable:!0})},H=(t,e,n,o)=>{if(e&&typeof e=="object"||typeof e=="function")for(let a of M(e))!L.call(t,a)&&a!==n&&C(t,a,{get:()=>e[a],enumerable:!(o=I(e,a))||o.enumerable});return t};var W=t=>H(C({},"__esModule",{value:!0}),t);var Z={};O(Z,{AREAS:()=>h,EVENTS:()=>y,areasOf:()=>D,createHostedEvent:()=>R,distanceKm:()=>x,nearestArea:()=>P,parseHostText:()=>E,rankEvents:()=>A,slotOf:()=>F,zonedToUtc:()=>w});var i=t=>({...t,isSample:!0}),y=[i({id:"e01",title:"Pop-up pour-over bar",category:"cafe",emoji:"\u2615",host:"Drift Coffee pop-up",neighborhood:"Capitol Hill",place:"Cal Anderson Park",lat:47.617,lng:-122.3191,start:"2026-10-18T09:00:00-07:00",end:"2026-10-18T12:00:00-07:00",cost:5,capacity:40,going:23,beginnerFriendly:!0,recurring:"every Sunday",blurb:"Rotating single-origin pours from a cart, plus a shared table for strangers to sit together."}),i({id:"e02",title:"Open-play pickleball",category:"sports",emoji:"\u{1F3D3}",host:"Green Lake Paddlers",neighborhood:"Green Lake",place:"Green Lake Park courts",lat:47.6805,lng:-122.329,start:"2026-10-18T14:00:00-07:00",end:"2026-10-18T16:00:00-07:00",cost:0,capacity:16,going:11,beginnerFriendly:!0,recurring:"every Sunday",blurb:"Rotate partners every game. Loaner paddles at the bench, no experience needed."}),i({id:"e03",title:"Discovery Park sunset hike",category:"outdoors",emoji:"\u{1F97E}",host:"Trailheads Seattle",neighborhood:"Magnolia",place:"Discovery Park lighthouse loop",lat:47.6573,lng:-122.4059,start:"2026-10-18T16:30:00-07:00",end:"2026-10-18T18:30:00-07:00",cost:0,capacity:25,going:14,beginnerFriendly:!0,blurb:"Easy 3-mile loop down to the beach for sunset. Group walks at a chatty pace."}),i({id:"e04",title:"Cold plunge + sauna social",category:"wellness",emoji:"\u{1F9D6}",host:"Salt & Steam collective",neighborhood:"Ballard",place:"Golden Gardens Park",lat:47.692,lng:-122.4034,start:"2026-10-19T07:00:00-07:00",end:"2026-10-19T08:30:00-07:00",cost:12,capacity:12,going:9,beginnerFriendly:!1,recurring:"every Monday",blurb:"Mobile sauna on the beach, a quick dip in the Sound, then coffee by the fire."}),i({id:"e05",title:"Beginner lap swim meetup",category:"swim",emoji:"\u{1F3CA}",host:"Lap Lane Club",neighborhood:"Queen Anne",place:"Queen Anne Pool",lat:47.6378,lng:-122.3604,start:"2026-10-19T18:30:00-07:00",end:"2026-10-19T19:30:00-07:00",cost:6,capacity:20,going:8,beginnerFriendly:!0,recurring:"every Monday",blurb:"Coach-led drills for newer swimmers, split into lanes by pace. Pool entry fee only."}),i({id:"e06",title:"Run club + bagels",category:"sports",emoji:"\u{1F3C3}",host:"Fremont Run Crew",neighborhood:"Fremont",place:"Fremont Troll",lat:47.651,lng:-122.3473,start:"2026-10-20T18:00:00-07:00",end:"2026-10-20T19:15:00-07:00",cost:0,capacity:60,going:37,beginnerFriendly:!0,recurring:"every Tuesday",blurb:"3 or 5 miles along the Burke-Gilman, no one gets dropped. Bagels after."}),i({id:"e07",title:"Board game night",category:"community",emoji:"\u{1F3B2}",host:"U District Tabletop",neighborhood:"U District",place:"University Heights Center",lat:47.6625,lng:-122.314,start:"2026-10-20T19:00:00-07:00",end:"2026-10-20T22:00:00-07:00",cost:3,capacity:50,going:26,beginnerFriendly:!0,recurring:"every Tuesday",blurb:"Hundreds of games and volunteers who teach. Come solo, you'll get seated with a table."}),i({id:"e08",title:"Open mic & acoustic jam",category:"music",emoji:"\u{1F3B8}",host:"Wallingford Sessions",neighborhood:"Wallingford",place:"Meridian Park",lat:47.66,lng:-122.3335,start:"2026-10-21T19:00:00-07:00",end:"2026-10-21T21:00:00-07:00",cost:0,capacity:40,going:15,beginnerFriendly:!0,blurb:"Sign up for a two-song slot or just sit in the circle and listen."}),i({id:"e09",title:"Pop-up dumpling workshop",category:"food",emoji:"\u{1F95F}",host:"Fold & Pleat kitchen",neighborhood:"Chinatown-ID",place:"Hing Hay Park",lat:47.5985,lng:-122.3248,start:"2026-10-21T18:00:00-07:00",end:"2026-10-21T20:00:00-07:00",cost:15,capacity:18,going:16,beginnerFriendly:!0,blurb:"Learn three folds, then eat everything you made. Veggie filling available."}),i({id:"e10",title:"Drop-in volleyball",category:"sports",emoji:"\u{1F3D0}",host:"Alki Sand Crew",neighborhood:"West Seattle",place:"Alki Beach courts",lat:47.579,lng:-122.41,start:"2026-10-22T17:30:00-07:00",end:"2026-10-22T19:30:00-07:00",cost:0,capacity:24,going:12,beginnerFriendly:!1,recurring:"every Thursday",blurb:"Pickup doubles and fours on the sand while there's light."}),i({id:"e11",title:"Sketch & sip",category:"art",emoji:"\u{1F3A8}",host:"Pencil Pushers",neighborhood:"Capitol Hill",place:"Volunteer Park conservatory lawn",lat:47.6301,lng:-122.315,start:"2026-10-22T18:00:00-07:00",end:"2026-10-22T20:00:00-07:00",cost:8,capacity:30,going:19,beginnerFriendly:!0,blurb:"Supplies and tea provided. A short prompt, then everyone shares (or doesn't)."}),i({id:"e12",title:"Lake Union paddle",category:"outdoors",emoji:"\u{1F6F6}",host:"Northwest Paddlers",neighborhood:"South Lake Union",place:"Lake Union Park",lat:47.627,lng:-122.337,start:"2026-10-23T17:00:00-07:00",end:"2026-10-23T19:00:00-07:00",cost:20,capacity:14,going:10,beginnerFriendly:!0,blurb:"Guided kayak loop past the houseboats. Boats and life jackets included."}),i({id:"e13",title:"Friday night food truck meet",category:"food",emoji:"\u{1F32E}",host:"Rolling Plates",neighborhood:"Ballard",place:"Ballard Commons Park",lat:47.6687,lng:-122.3842,start:"2026-10-23T17:30:00-07:00",end:"2026-10-23T20:30:00-07:00",cost:12,capacity:200,going:64,beginnerFriendly:!0,recurring:"every Friday",blurb:"Six trucks, long communal tables, and a playlist anyone can add to."}),i({id:"e14",title:"Climbing intro night",category:"sports",emoji:"\u{1F9D7}",host:"Send It Social",neighborhood:"Fremont",place:"Fremont climbing gym (sample)",lat:47.649,lng:-122.35,start:"2026-10-23T19:00:00-07:00",end:"2026-10-23T21:00:00-07:00",cost:18,capacity:20,going:13,beginnerFriendly:!0,blurb:"Gear and a belay lesson included. You'll be paired with a climbing buddy."}),i({id:"e15",title:"Saturday market volunteer shift",category:"community",emoji:"\u{1F33B}",host:"Neighbors Feeding Neighbors",neighborhood:"U District",place:"University Way farmers market",lat:47.6655,lng:-122.313,start:"2026-10-24T09:00:00-07:00",end:"2026-10-24T12:00:00-07:00",cost:0,capacity:15,going:7,beginnerFriendly:!0,recurring:"every Saturday",blurb:"Help collect and sort surplus produce for local food banks. Snacks on us."}),i({id:"e16",title:"Gas Works kite flying",category:"outdoors",emoji:"\u{1FA81}",host:"Wind & Wonder",neighborhood:"Wallingford",place:"Gas Works Park hill",lat:47.6456,lng:-122.3344,start:"2026-10-24T11:00:00-07:00",end:"2026-10-24T13:00:00-07:00",cost:0,capacity:80,going:31,beginnerFriendly:!0,blurb:"Bring a kite or borrow one. Best wind is on top of the hill."}),i({id:"e17",title:"Open-water swim (wetsuits)",category:"swim",emoji:"\u{1F30A}",host:"Sound Swimmers",neighborhood:"West Seattle",place:"Alki Beach",lat:47.581,lng:-122.407,start:"2026-10-24T08:00:00-07:00",end:"2026-10-24T09:30:00-07:00",cost:0,capacity:30,going:18,beginnerFriendly:!1,recurring:"every Saturday",blurb:"Buddy system, kayak spotter, hot drinks after. Wetsuit strongly recommended in October."}),i({id:"e18",title:"Matcha pop-up + journaling",category:"cafe",emoji:"\u{1F375}",host:"Slow Morning pop-up",neighborhood:"Fremont",place:"Fremont Sunday market lot",lat:47.6505,lng:-122.35,start:"2026-10-24T10:00:00-07:00",end:"2026-10-24T12:00:00-07:00",cost:7,capacity:25,going:12,beginnerFriendly:!0,blurb:"Whisked-to-order matcha and a shared table with journaling prompts."}),i({id:"e19",title:"Pickup basketball",category:"sports",emoji:"\u{1F3C0}",host:"Cal Anderson Hoops",neighborhood:"Capitol Hill",place:"Cal Anderson Park court",lat:47.6165,lng:-122.3185,start:"2026-10-24T14:00:00-07:00",end:"2026-10-24T16:00:00-07:00",cost:0,capacity:20,going:14,beginnerFriendly:!1,recurring:"every Saturday",blurb:"Run fives, winners stay. All skill levels show up, games stay friendly."}),i({id:"e20",title:"Bellevue lakeside yoga",category:"wellness",emoji:"\u{1F9D8}",host:"Flow Outside",neighborhood:"Bellevue",place:"Meydenbauer Bay Park",lat:47.6145,lng:-122.208,start:"2026-10-24T09:30:00-07:00",end:"2026-10-24T10:30:00-07:00",cost:10,capacity:30,going:17,beginnerFriendly:!0,recurring:"every Saturday",blurb:"Gentle all-levels flow on the lawn. Mats available to borrow."}),i({id:"e21",title:"Redmond trail bike ride",category:"outdoors",emoji:"\u{1F6B2}",host:"Eastside Spokes",neighborhood:"Redmond",place:"Marymoor Park",lat:47.662,lng:-122.121,start:"2026-10-18T10:00:00-07:00",end:"2026-10-18T12:00:00-07:00",cost:0,capacity:30,going:12,beginnerFriendly:!0,blurb:"Casual 15-mile out-and-back on the Sammamish River Trail. Coffee stop halfway."}),i({id:"e22",title:"Late-night ramen pop-up",category:"food",emoji:"\u{1F35C}",host:"Midnight Noodle",neighborhood:"Capitol Hill",place:"Pike/Pine pop-up space",lat:47.614,lng:-122.32,start:"2026-10-24T21:00:00-07:00",end:"2026-10-24T23:30:00-07:00",cost:14,capacity:30,going:27,beginnerFriendly:!0,blurb:"One bowl, one night. Counter seating means you'll end up talking to your neighbor."}),i({id:"e23",title:"Sunday soup swap potluck",category:"food",emoji:"\u{1F958}",host:"Maya, a neighbor",hostedBy:"neighbor",potluck:!0,bringing:["lentil soup","sourdough","clementines"],neighborhood:"Capitol Hill",place:"Volunteer Park picnic tables",lat:47.629,lng:-122.316,start:"2026-10-18T17:00:00-07:00",end:"2026-10-18T19:00:00-07:00",cost:0,capacity:15,going:9,beginnerFriendly:!0,recurring:"every Sunday",blurb:"Bring a soup (or bread, or just a bowl). Everyone leaves with leftovers and a few new names."}),i({id:"e24",title:"Dorm-friendly dinner potluck",category:"food",emoji:"\u{1F958}",host:"Jordan, a neighbor",hostedBy:"neighbor",potluck:!0,bringing:["rice cooker rice","kimchi"],neighborhood:"U District",place:"University Heights Center lawn",lat:47.662,lng:-122.3135,start:"2026-10-22T18:30:00-07:00",end:"2026-10-22T20:30:00-07:00",cost:0,capacity:20,going:7,beginnerFriendly:!0,blurb:"No kitchen? No problem. Bring snacks, a store-bought dessert, or a playlist. Plates provided."}),i({id:"e25",title:"Pickup soccer + orange slices",category:"sports",emoji:"\u26BD",host:"Sam, a neighbor",hostedBy:"neighbor",neighborhood:"Ballard",place:"Ballard Commons Park field",lat:47.669,lng:-122.385,start:"2026-10-24T13:00:00-07:00",end:"2026-10-24T15:00:00-07:00",cost:0,capacity:18,going:8,beginnerFriendly:!0,blurb:"Casual small-sided games, all levels. Someone always brings orange slices."})],h={"capitol hill":{lat:47.6253,lng:-122.3222,label:"Capitol Hill"},"u district":{lat:47.6615,lng:-122.313,label:"U District"},udistrict:{lat:47.6615,lng:-122.313,label:"U District"},uw:{lat:47.6553,lng:-122.3035,label:"UW"},ballard:{lat:47.6687,lng:-122.384,label:"Ballard"},fremont:{lat:47.651,lng:-122.35,label:"Fremont"},wallingford:{lat:47.6615,lng:-122.334,label:"Wallingford"},"green lake":{lat:47.68,lng:-122.329,label:"Green Lake"},"queen anne":{lat:47.637,lng:-122.357,label:"Queen Anne"},downtown:{lat:47.6062,lng:-122.3321,label:"Downtown"},"south lake union":{lat:47.6256,lng:-122.3344,label:"South Lake Union"},slu:{lat:47.6256,lng:-122.3344,label:"South Lake Union"},"west seattle":{lat:47.57,lng:-122.386,label:"West Seattle"},bellevue:{lat:47.6101,lng:-122.2015,label:"Bellevue"},redmond:{lat:47.674,lng:-122.1215,label:"Redmond"},kirkland:{lat:47.6769,lng:-122.206,label:"Kirkland"}};var f=t=>t*Math.PI/180;function x(t,e){let o=f(e.lat-t.lat),a=f(e.lng-t.lng),s=Math.sin(o/2)**2+Math.cos(f(t.lat))*Math.cos(f(e.lat))*Math.sin(a/2)**2;return 2*6371*Math.asin(Math.sqrt(s))}function G(t,e="America/Los_Angeles"){let n=new Intl.DateTimeFormat("en-US",{timeZone:e,weekday:"short",hour:"numeric",hourCycle:"h23"}).formatToParts(new Date(t));return{wd:["Sun","Mon","Tue","Wed","Thu","Fri","Sat"].indexOf(n.find(a=>a.type==="weekday").value),hour:+n.find(a=>a.type==="hour").value}}function D(t){return t.areas?.length?t.areas:t.home?[t.home]:[]}function P(t,e){let n;for(let o of D(t)){let a=x(o,e);(!n||a<n.km)&&(n={km:a,area:o})}return n}function F(t){let{wd:e,hour:n}=G(t);return e===0||e===6?"weekends":n<10?"weekday_mornings":n>=17?"weekday_evenings":"weekday_daytime"}function A(t,e,n,o={}){let a=[];for(let r of t){if(Date.parse(r.start)<=n.getTime()||Date.parse(r.start)>n.getTime()+8*864e5||o.excludeIds?.has(r.id)||r.going>=r.capacity||e.maxBudget!==void 0&&r.cost>e.maxBudget||e.beginnerOnly&&!r.beginnerFriendly)continue;let d=F(r.start);if(e.when.length&&!e.when.includes(d))continue;let c=P(e,r),b=c?.km;if(b!==void 0&&e.maxDistanceKm!==void 0&&b>e.maxDistanceKm)continue;let l=[],g=0;e.interests.includes(r.category)&&(g+=3,l.push(`you're into ${r.category}`)),b!==void 0&&(g+=Math.max(0,2-b/4),b<3&&l.push(`${b.toFixed(1)} km from ${c.area.label}`)),r.cost===0&&(g+=.5,l.push("free")),r.beginnerFriendly&&(g+=.5,l.push("beginner-friendly")),r.recurring&&(g+=.5,l.push(`happens ${r.recurring}, easy to become a regular`)),r.hostedBy==="neighbor"&&(g+=.5,l.push(r.potluck?"neighbor potluck, bring a dish":"hosted by a neighbor"));let k=(Date.parse(r.start)-n.getTime())/864e5;g+=Math.max(0,1-k/7)*.5,a.push({event:r,distanceKm:b,score:Math.round(g*100)/100,reasons:l})}a.sort((r,d)=>d.score-r.score||Date.parse(r.event.start)-Date.parse(d.event.start)||r.event.id.localeCompare(d.event.id));let s=new Map,m=[];for(let r of a){let d=s.get(r.event.category)??0;if(!(d>=2)&&(s.set(r.event.category,d+1),m.push(r),m.length===(o.limit??5)))break}return m}var $=[["cafe",/\b(caf[eé]s?|coffee\w*|matcha|tea|latte\w*|pop[- ]?ups?|brunch)\b/],["sports",/\b(sport\w*|pickleball|basketball|hoops|volleyball|run(s|ning|ner)?|climb\w*|bouldering|soccer|tennis|active)\b/],["swim",/\b(swim\w*|pool|plunge|beach)\b/],["outdoors",/\b(outdoor\w*|outside|hik(e|es|ing)|nature|trails?|kayak\w*|paddl\w*|bik(e|es|ing)|kites?|parks?|sunset)\b/],["music",/\b(music\w*|open mic|concerts?|jam\w*|guitar|singing|band)\b/],["food",/\b(food\w*|eat\w*|cook\w*|dumplings?|ramen|food trucks?|dinner|lunch|snacks?)\b/],["art",/\b(art\w*|sketch\w*|draw\w*|paint\w*|craft\w*|creative)\b/],["wellness",/\b(yoga|wellness|sauna|meditat\w*|chill|relax\w*|calm)\b/],["community",/\b(community|volunteer\w*|board games?|games?|meet people|social|new friends)\b/]];function U(t){let e=t.toLowerCase().replace(/[’']/g,"");return $.filter(([,n])=>n.test(e)).map(([n])=>n)}function j(t,e){let n=new Intl.DateTimeFormat("en-US",{timeZone:t,hourCycle:"h23",year:"numeric",month:"2-digit",day:"2-digit",hour:"2-digit",minute:"2-digit",second:"2-digit"}).formatToParts(e),o=s=>Number(n.find(m=>m.type===s).value);return(Date.UTC(o("year"),o("month")-1,o("day"),o("hour"),o("minute"),o("second"))-e.getTime())/6e4}function w(t,e,n,o,a,s){let m=new Date(Date.UTC(t,e-1,n,o,a)),r=j(s,m),d=new Date(m.getTime()-r*6e4),c=j(s,d);return c===r?d:new Date(m.getTime()-c*6e4)}var N="America/Los_Angeles",B=["sunday","monday","tuesday","wednesday","thursday","friday","saturday"],_={cafe:"\u2615",sports:"\u{1F3C3}",swim:"\u{1F3CA}",outdoors:"\u{1F33F}",music:"\u{1F3B6}",food:"\u{1F37D}\uFE0F",art:"\u{1F3A8}",wellness:"\u{1F9D8}",community:"\u{1F3E1}"},K=(()=>{let t=[];for(let e of y){let n=e.place.toLowerCase().replace(/\b(park|courts?|pool|lawn|field|picnic tables|hill|loop|lighthouse|beach|center)\b/g,"").replace(/\s+/g," ").trim();n.length>3&&!t.some(o=>o.key===n)&&t.push({key:n,place:e.place,neighborhood:e.neighborhood,lat:e.lat,lng:e.lng})}for(let[e,n]of Object.entries(h))t.push({key:e,place:`near ${n.label}`,neighborhood:n.label,lat:n.lat,lng:n.lng});return t.sort((e,n)=>n.key.length-e.key.length)})();function R(t){let e=t.potluck??/potluck/i.test(t.title),n=e?"food":t.category??U(t.title)[0]??"community",o=Date.parse(t.start);return{id:"h"+o.toString(36)+Math.random().toString(36).slice(2,6),title:t.title,category:n,emoji:e?"\u{1F958}":_[n],host:t.hostName?`${t.hostName}, a neighbor`:"a neighbor",hostedBy:"neighbor",hostUserId:t.hostUserId,potluck:e,bringing:e?[]:void 0,neighborhood:t.neighborhood,place:t.place,lat:t.lat,lng:t.lng,start:new Date(o).toISOString(),end:new Date(o+2*36e5).toISOString(),cost:0,capacity:e?15:12,going:1,beginnerFriendly:!0,isSample:!1,blurb:e?"Bring a dish to share, or just bring yourself. Reply BRING <dish> after joining so we don't end up with six salads.":"Hosted by a neighbor through What's Cooking. All levels welcome, just show up."}}function E(t,e,n=N){let o=" "+t.toLowerCase().replace(/^\s*host\b:?/,"").replace(/[^a-z0-9: ]/g," ").replace(/\s+/g," ")+" ",a=[],s=K.find(u=>o.includes(` ${u.key} `));s?o=o.replace(` ${s.key} `," "):a.push("where");let m=u=>B.indexOf(new Intl.DateTimeFormat("en-US",{timeZone:n,weekday:"long"}).format(u).toLowerCase()),r,d=o.match(/ (today|tonight|tomorrow|sun|mon|tue|tues|wed|thu|thur|thurs|fri|sat)(day|nesday|rsday|urday|sday)? /);if(d){let u=d[1];r=u==="today"||u==="tonight"?0:u==="tomorrow"?1:(B.findIndex(S=>S.startsWith(u.slice(0,3)))-m(e)+7)%7,o=o.replace(d[0]," ")}let c=o.match(/ (?:at )?(\d{1,2})(?::(\d\d))?\s*(am|pm)? /);c&&(o=o.replace(c[0]," ")),(r===void 0||!c)&&a.push("when");let b=o.replace(/\b(at|on|in|near|the|this|next)\b/g," ").replace(/\s+/g," ").trim();if(b||a.push("what"),a.length)return{ok:!1,missing:a};let l=+c[1],g=c[3];g==="pm"&&l<12?l+=12:g==="am"&&l===12?l=0:!g&&l>=1&&l<=9&&(l+=12);let k=new Intl.DateTimeFormat("en-US",{timeZone:n,year:"numeric",month:"numeric",day:"numeric"}).formatToParts(e),T=u=>+k.find(S=>S.type===u).value,v=new Date(Date.UTC(T("year"),T("month")-1,T("day")+r)),p=w(v.getUTCFullYear(),v.getUTCMonth()+1,v.getUTCDate(),l,+(c[2]??0),n);return p.getTime()<e.getTime()&&(p=new Date(p.getTime()+7*864e5)),{ok:!0,input:{title:b.replace(/\b\w/,u=>u.toUpperCase()),start:p.toISOString(),place:s.place,neighborhood:s.neighborhood,lat:s.lat,lng:s.lng}}}return W(Z);})();
 </script>
 <script>
-const { rankEvents, nearestArea, areasOf, EVENTS, AREAS } = Core;
+const { rankEvents, nearestArea, areasOf, createHostedEvent, parseHostText, zonedToUtc, EVENTS, AREAS } = Core;
 const NOW = new Date("2026-10-18T05:00:00.000Z"); // demo "now": Sat Oct 17, 10 PM PT
 const TZ = "America/Los_Angeles";
 const $ = (s, r = document) => r.querySelector(s);
@@ -217,7 +240,8 @@ reset();
 
 // ------------------------------------------------------------ shell
 const STEPS = [["Tell us what you're into", () => onboarding(0)], ["Discover on the map", () => go("discover", "map")], ["Browse the list", () => go("discover", "list")],
-  ["Join and show up", () => { go("discover", "list"); setTimeout(() => openSheet(forYou()[0].event.id), 350); }], ["Your week", () => go("week")], ["Weekly text", () => go("texts")]];
+  ["Join and show up", () => { go("discover", "list"); setTimeout(() => openSheet(forYou()[0].event.id), 350); }],
+  ["Host a potluck", () => { go("discover", "map"); setTimeout(openHost, 350); }], ["Your week", () => go("week")], ["Weekly text", () => go("texts")]];
 function rail(i) { $("#steps").innerHTML = STEPS.map(([s], k) => `<li><button data-i="${k}" class="${k === i ? "on" : ""}"><b>${k + 1}</b>${s}</button></li>`).join(""); }
 $("#steps").addEventListener("click", (e) => { const b = e.target.closest("button"); if (b) STEPS[+b.dataset.i][1](); });
 function fit() { const w = $("#wrap"), k = Math.min(1, (innerHeight - 48) / 844, (innerWidth - 32) / 390);
@@ -230,6 +254,7 @@ function screen(html) { closeSheet(true); const s = $("#screen"); s.className = 
 const forYou = (limit = 5) => rankEvents(S.events, S.profile, NOW, { limit });
 function visible() {
   if (S.filter === "for-you") return forYou(6);
+  if (S.filter === "potluck") return rankEvents(S.events, { ...S.profile, maxDistanceKm: 40, interests: ["food", "community"], maxBudget: undefined }, NOW, { limit: 99 }).filter((p) => p.event.potluck || p.event.hostedBy === "neighbor");
   return rankEvents(S.events, { ...S.profile, maxDistanceKm: 40, interests: [S.filter] }, NOW, { limit: 99 }).filter((p) => p.event.category === S.filter);
 }
 const ev = (id) => S.events.find((e) => e.id === id);
@@ -278,15 +303,16 @@ function go(tab, view) { S.tab = tab; if (view) S.view = view; ({ discover, week
 // ------------------------------------------------------------ 2/3. discover
 function discover() {
   rail(S.view === "map" ? 1 : 2);
-  const chips = [["for-you","✨ for you"], ...CATS.map(([c, e]) => [c, `${e} ${c}`])];
+  const chips = [["for-you","✨ for you"], ["potluck","🥘 potlucks & neighbors"], ...CATS.map(([c, e]) => [c, `${e} ${c}`])];
   screen(`
     <div class="top">
       <div><div class="kicker">this week near ${whereLabel()}</div><h1>what's <em>happening</em></h1></div>
       <div class="seg"><button data-v="map" class="${S.view === "map" ? "on" : ""}">Map</button><button data-v="list" class="${S.view === "list" ? "on" : ""}">List</button></div>
       <div class="filters">${chips.map(([k, l]) => `<button data-f="${k}" class="${S.filter === k ? "on" : ""}">${l}</button>`).join("")}</div>
     </div>
-    <div class="body" id="body"></div>${tabs()}`);
+    <div class="body" id="body"></div><button class="fab" id="hostbtn">＋ host something</button>${tabs()}`);
   bindTabs();
+  $("#hostbtn").onclick = openHost;
   $(".seg").onclick = (e) => { const b = e.target.closest("button"); if (b) { S.view = b.dataset.v; discover(); } };
   $(".filters").onclick = (e) => { const b = e.target.closest("button"); if (!b) return; S.filter = b.dataset.f;
     $(".filters").querySelectorAll("button").forEach((x) => x.classList.toggle("on", x === b)); S.view === "map" ? drawMap() : drawList(); };
@@ -340,7 +366,7 @@ function drawMap() {
   const v = S.view0, k = v.w / 140;
   const pins = S.events.filter((e) => Date.parse(e.start) > NOW.getTime()).map((e) => {
     const [x, y] = P(e.lat, e.lng), on = shown.has(e.id), r = 8 * k;
-    return `<g class="pin ${on ? "" : "dim"} ${S.joined.has(e.id) ? "joined" : ""}" data-id="${e.id}" transform="translate(${x},${y})">
+    return `<g class="pin ${on ? "" : "dim"} ${S.joined.has(e.id) ? "joined" : ""} ${e.hostedBy === "neighbor" ? "nb" : ""} ${S.fresh === e.id ? "fresh" : ""}" data-id="${e.id}" transform="translate(${x},${y})">
       ${S.joined.has(e.id) ? `<circle class="ring" r="${r + 3 * k}" stroke-width="${1.8 * k}"/>` : ""}
       <circle class="bg" r="${r}" fill="${COLORS[e.category]}" stroke-width="${2 * k}"/>
       <text style="font-size:${9.5 * k}px">${e.emoji}</text></g>`; }).join("");
@@ -348,7 +374,7 @@ function drawMap() {
     return `<g class="me" transform="translate(${x},${y})"><circle class="pulse" r="${7 * k}"/><circle r="${4 * k}" fill="#d98a9a" stroke="#fff" stroke-width="${1.4 * k}"/></g>`; }).join("");
   const [gx, gy] = P(47.6805, -122.336);
   body.innerHTML = `<div class="map" id="map">
-    <div class="maplegend">${picks.length} ${S.filter === "for-you" ? "picks for you" : S.filter} · sample events</div>
+    <div class="maplegend">${picks.length} ${S.filter === "for-you" ? "picks for you" : S.filter === "potluck" ? "neighbor-hosted" : S.filter} · pink rim = hosted by a neighbor</div>
     <div class="mapctl"><button id="zi" aria-label="Zoom in">+</button><button id="zo" aria-label="Zoom out">−</button><button id="zc" aria-label="Recenter">◎</button></div>
     <svg id="svg" viewBox="${v.x} ${v.y} ${v.w} ${v.h}" preserveAspectRatio="xMidYMid slice">
       ${PARKS.map(([la, ln, a, b]) => { const [x, y] = P(la, ln); return `<ellipse class="park" cx="${x}" cy="${y}" rx="${b * KX}" ry="${a * KY}"/>`; }).join("")}
@@ -386,12 +412,12 @@ function openSheet(id) {
   rail(3);
   const e = ev(id), d = distTo(e);
   const p = rankEvents(S.events, { ...S.profile, maxDistanceKm: 99, maxBudget: undefined, when: [] }, NOW, { limit: 99 }).find((x) => x.event.id === id);
-  const n = +id.slice(1);
+  const n = [...id].reduce((a, c) => a + c.charCodeAt(0), 0);
   const avs = Array.from({ length: Math.min(5, e.going) }, (_, i) => `<div class="av" style="background:${AVC[(i + n) % AVC.length]}">${"ABCDEFGHJKLMNPRSTW"[(i * 7 + n) % 18]}</div>`).join("");
   closeSheet(true);
   $("#phone").insertAdjacentHTML("beforeend", `<div class="scrim" id="scrim"></div><div class="sheet" role="dialog" aria-label="${e.title}">
     <div class="grab"></div><button class="close" id="x" aria-label="Close">✕</button>
-    <div class="hero c-${e.category}"><span class="sample">sample event</span>${e.emoji}</div>
+    <div class="hero c-${e.category}"><span class="sample">${e.hostedBy === "neighbor" ? "🏡 hosted by a neighbor" : "sample event"}${e.isSample && e.hostedBy ? " · sample" : ""}</span>${e.emoji}</div>
     <div><div class="kicker">${e.host}</div><h2>${e.title}</h2></div>
     <div class="facts">
       <div>🗓 ${fmt(e.start, { weekday: "long", month: "short", day: "numeric" })} · ${time(e.start)} – ${time(e.end)}</div>
@@ -401,26 +427,111 @@ function openSheet(id) {
     <div class="people"><div class="avs">${avs}</div><span id="cnt">${e.going} going · ${e.capacity - e.going} spots left</span></div>
     <div class="bar"><i id="fill" style="width:${(e.going / e.capacity) * 100}%"></i></div>
     ${e.recurring ? `<div class="regular">🔁 Happens <b>${e.recurring}</b>. Come three times and you're a regular. We can save your spot each week.</div>` : ""}
+    ${e.potluck ? `<div class="potluck" id="pot"></div>` : ""}
     ${p?.reasons?.length ? `<div class="kicker">why it's for you: ${p.reasons.join(" · ")}</div>` : ""}
     <div class="row"><button class="ghost" id="share">↗ invite</button><button class="cta" id="join"></button></div>
   </div>`);
   const label = () => { $("#join").textContent = S.joined.has(id) ? "✓ you're going · tap to leave" : "I'm going"; };
   label();
+  const pot = () => { const el = $("#pot"); if (!el) return;
+    el.innerHTML = `<div class="label">🥘 potluck · bringing so far</div>
+      <div class="dishes">${(e.bringing ?? []).map((d) => `<span class="dish">${esc(d)}</span>`).join("") || `<span class="kicker">nothing yet, be the first!</span>`}</div>
+      ${S.joined.has(id) ? `<form class="bringform" id="bf"><input class="field" id="bi" placeholder="I'll bring…" autocomplete="off" aria-label="What you're bringing"><button>add</button></form>`
+        : `<div class="kicker">join to add what you're bringing</div>`}`;
+    $("#bf")?.addEventListener("submit", (x) => { x.preventDefault(); const dish = $("#bi").value.trim(); if (!dish) return;
+      e.bringing = [...(e.bringing ?? []), dish]; pot(); toast(`yum! ${dish} added 🥘`);
+      if (S.live && !S.reel) api("/api/bring", { id, dish }); }); };
+  pot();
   $("#scrim").onclick = () => closeSheet(); $("#x").onclick = () => closeSheet();
   $("#share").onclick = () => toast("invite link copied (demo)");
   $("#join").onclick = () => {
     if (S.joined.has(id)) { S.joined.delete(id); e.going--; toast("you're off the list"); }
-    else { if (e.going >= e.capacity) return toast("this one's full"); S.joined.add(id); e.going++; confetti(); toast(`you're in! ${e.going - 1} others going`); }
-    label();
+    else { if (e.going >= e.capacity) return toast("this one's full"); S.joined.add(id); e.going++; confetti(); toast(e.potluck ? "you're in! tell us what you're bringing 🥘" : `you're in! ${e.going - 1} others going`); }
+    if (S.live && !S.reel) api("/api/join", { id, join: S.joined.has(id) });
+    label(); pot();
     $("#cnt").textContent = `${e.going} going · ${e.capacity - e.going} spots left`;
     $("#fill").style.width = `${(e.going / e.capacity) * 100}%`;
     refreshTabs();
   };
 }
 
+// ------------------------------------------------------------ host something (everyone brings something)
+const HOST_TYPES = [["potluck", "🥘 potluck", "food"], ["game", "🏓 pickup game", "sports"], ["walk", "🚶 walk", "outdoors"], ["hang", "✨ hangout", "community"]];
+const HOST_TIMES = [[10, "10am"], [13, "1pm"], [16, "4pm"], [18, "6pm"], [19, "7pm"]];
+function weekDays() { // the 7 days after "now", in Pacific time
+  return Array.from({ length: 7 }, (_, i) => { const d = new Date(NOW.getTime() + (i + 1) * 864e5 - 6 * 3600e3);
+    const p = new Intl.DateTimeFormat("en-US", { timeZone: TZ, year: "numeric", month: "numeric", day: "numeric", weekday: "short" }).formatToParts(d);
+    const g = (k) => p.find((x) => x.type === k).value; return { y: +g("year"), m: +g("month"), d: +g("day"), label: `${g("weekday").toLowerCase()} ${g("day")}` }; });
+}
+function openHost() {
+  rail(4);
+  const H = { title: "", type: "potluck", day: null, hour: null, hood: areasOf(S.profile)[0]?.label ?? "Capitol Hill" };
+  const days = weekDays();
+  closeSheet(true);
+  $("#phone").insertAdjacentHTML("beforeend", `<div class="scrim" id="scrim"></div><div class="sheet" role="dialog" aria-label="Host something">
+    <div class="grab"></div><button class="close" id="x" aria-label="Close">✕</button>
+    <div><div class="kicker">everyone brings something to the table</div><h2>host something</h2></div>
+    <div class="hostgrid"><label class="label" for="ht">what is it?</label><input class="field" id="ht" placeholder="sunday soup potluck" autocomplete="off" maxlength="60"></div>
+    <div class="chipset sm" id="htype">${HOST_TYPES.map(([k, l]) => `<button class="pick ${H.type === k ? "on" : ""}" data-k="${k}">${l}</button>`).join("")}</div>
+    <div class="label">when</div>
+    <div class="chipset sm" id="hday">${days.map((d, i) => `<button class="pick" data-i="${i}">${d.label}</button>`).join("")}</div>
+    <div class="chipset sm" id="htime">${HOST_TIMES.map(([h, l]) => `<button class="pick" data-h="${h}">${l}</button>`).join("")}</div>
+    <div class="label">where</div>
+    <div class="chipset sm" id="hhood">${HOODS.map((h) => `<button class="pick ${H.hood === h ? "on" : ""}" data-h="${h}">📍 ${h}</button>`).join("")}</div>
+    <button class="cta" id="post" disabled>post it 🍳</button>
+    <div class="kicker" style="text-align:center">it shows up on the map now and in neighbors' sunday texts.</div>
+  </div>`);
+  const ok = () => { $("#post").disabled = !(H.title.trim() && H.day !== null && H.hour !== null && H.hood); };
+  const one = (box, el) => box.querySelectorAll(".pick").forEach((x) => x.classList.toggle("on", x === el));
+  $("#ht").oninput = (x) => { H.title = x.target.value; ok(); };
+  $("#htype").onclick = (x) => { const b = x.target.closest(".pick"); if (!b) return; H.type = b.dataset.k; one($("#htype"), b); };
+  $("#hday").onclick = (x) => { const b = x.target.closest(".pick"); if (!b) return; H.day = +b.dataset.i; one($("#hday"), b); ok(); };
+  $("#htime").onclick = (x) => { const b = x.target.closest(".pick"); if (!b) return; H.hour = +b.dataset.h; one($("#htime"), b); ok(); };
+  $("#hhood").onclick = (x) => { const b = x.target.closest(".pick"); if (!b) return; H.hood = b.dataset.h; one($("#hhood"), b); ok(); };
+  $("#scrim").onclick = () => closeSheet(); $("#x").onclick = () => closeSheet();
+  $("#post").onclick = async () => {
+    const d = days[H.day], a = AREAS[H.hood.toLowerCase()], t = HOST_TYPES.find((x) => x[0] === H.type);
+    const input = { title: H.title.trim(), start: zonedToUtc(d.y, d.m, d.d, H.hour, 0, TZ).toISOString(), place: `near ${H.hood}`, neighborhood: H.hood,
+      lat: a.lat + (Math.random() - .5) * .004, lng: a.lng + (Math.random() - .5) * .006, potluck: H.type === "potluck", category: t[2], hostName: "you" };
+    let e = createHostedEvent(input);
+    if (S.live && !S.reel) { const r = await api("/api/host", input); if (r?.event) e = r.event; }
+    S.events = S.events.filter((x) => x.id !== e.id).concat(e); S.joined.add(e.id); S.fresh = e.id;
+    closeSheet(true); confetti(); toast("posted! neighbors will see it sunday 🍳");
+    S.filter = "potluck"; S.view = "map";
+    const [x, y] = P(e.lat, e.lng); S.view0 = { x: x - 70, y: y - 75, w: 140, h: 150 };
+    go("discover", "map");
+  };
+}
+
+// ------------------------------------------------------------ live link with the iMessage bot (only when it's running on this laptop)
+const API = "http://localhost:8787";
+let liveVersion = -1;
+async function api(path, body) {
+  try { const r = await fetch(API + path, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(body) }); const j = await r.json(); sync(); return j; }
+  catch { return null; }
+}
+async function sync() {
+  if (S.reel) return;
+  try {
+    const r = await fetch(API + "/api/state", { cache: "no-store" }); if (!r.ok) throw new Error();
+    const st = await r.json();
+    if (!S.live) { S.live = true; document.body.classList.add("is-live"); }
+    if (st.version === liveVersion) return;
+    const before = new Set(S.joined), first = liveVersion < 0;
+    liveVersion = st.version;
+    S.events = st.events; if (st.me) S.joined = new Set(st.me.joined);
+    if (!first && [...S.joined].some((id) => !before.has(id))) toast("📲 synced from iMessage");
+    if ($(".sheet")) { refreshTabs(); return; } // don't yank a sheet out from under someone
+    if (S.tab === "discover" && $("#body")) S.view === "map" ? drawMap() : drawList();
+    else if (S.tab === "week") week();
+    refreshTabs();
+  } catch { if (S.live) { S.live = false; document.body.classList.remove("is-live"); } }
+}
+if (location.protocol !== "https:" || location.hostname === "localhost") { sync(); setInterval(sync, 2500); }
+
 // ------------------------------------------------------------ 5. my week
 function week() {
-  rail(4);
+  rail(5);
   const mine = [...S.joined].map(ev).sort((a, b) => Date.parse(a.start) - Date.parse(b.start));
   const days = {};
   for (const e of mine) (days[fmt(e.start, { weekday: "long", month: "short", day: "numeric" })] ??= []).push(e);
@@ -444,11 +555,11 @@ function digestText(picks) {
     "\n\nreply a number to join (like 1), INFO 2 for details, or MORE.";
 }
 function texts() {
-  rail(5);
+  rail(6);
   if (!S.texts) { const picks = forYou(); S.texts = { list: picks.map((p) => p.event.id), msgs: [["ts", "Sunday 9:00 AM"], ["them", "good morning ☀️ here's your week:"], ["them", digestText(picks)]] }; }
   screen(`<div class="imsg"><div class="imsg-head"><div class="av">🍳</div><span>What's Cooking</span></div>
     <div class="thread" id="th">${S.texts.msgs.map(([w, t]) => w === "ts" ? `<div class="ts">${t}</div>` : `<div class="b ${w}">${esc(t)}</div>`).join("")}</div></div>
-    <div class="quick" id="quick">${["1","INFO 2","MORE","something outdoorsy","MY"].map((q) => `<button type="button">${q}</button>`).join("")}</div>
+    <div class="quick" id="quick">${["1","INFO 2","MORE","something outdoorsy","HOST taco potluck sat 6pm cal anderson","MY"].map((q) => `<button type="button">${q}</button>`).join("")}</div>
     <form class="compose" id="cf"><input id="ci" placeholder="iMessage" autocomplete="off" aria-label="Message What's Cooking"><button aria-label="Send">↑</button></form>${tabs()}`);
   bindTabs();
   const th = $("#th"); th.scrollTop = th.scrollHeight;
@@ -471,6 +582,12 @@ function reply(t) {
   if (up === "MORE") { const p = rankEvents(S.events, S.profile, NOW, { limit: 5, excludeIds: new Set([...L, ...S.joined]) }); if (!p.length) return "that's everything for this week!"; S.texts.list = p.map((x) => x.event.id); return digestText(p); }
   if (up === "MY") { const m = [...S.joined].map(ev); return m.length ? "your plans:\n\n" + m.map((e) => `${e.emoji} ${e.title}, ${dayShort(e.start)} ${time(e.start)}`).join("\n") : "nothing yet. text EVENTS to find something."; }
   if (up === "EVENTS") { const p = forYou(); S.texts.list = p.map((x) => x.event.id); return digestText(p); }
+  if (/^HOST\b/.test(up)) { const r = parseHostText(t, NOW); if (!r.ok) return "love that you want to host! try something like:\nHOST taco potluck sat 6pm cal anderson";
+    const e = createHostedEvent({ ...r.input, hostName: "you" }); S.events.push(e); S.joined.add(e.id); refreshTabs();
+    return `posted! ${e.emoji} ${e.title}\n${fmt(e.start, { weekday: "long" })}, ${time(e.start)} · ${e.place}\n\nit's on the map now and goes out in neighbors' weekly texts.${e.potluck ? " guests can reply BRING <dish> 🥘" : ""}`; }
+  const br = t.match(/^bring\s+(.+)/i);
+  if (br) { const e = [...S.joined].map(ev).reverse().find((x) => x?.potluck); if (!e) return "join a potluck first, then tell me what you're bringing!";
+    e.bringing = [...(e.bringing ?? []), br[1]]; return `yum, noted! 🥘 for ${e.title} so far: ${e.bringing.join(", ")}.`; }
   const mood = Object.keys(MOODS).filter((c) => MOODS[c].test(t));
   if (mood.length) { const p = rankEvents(S.events, { ...S.profile, interests: mood }, NOW, { limit: 5 }); if (!p.length) return "nothing like that fits your settings this week."; S.texts.list = p.map((x) => x.event.id); return digestText(p); }
   return "EVENTS · MORE · 1, 2, 3 to join · INFO 2 · MY · or text a mood like \"something outdoorsy\"";
@@ -515,8 +632,8 @@ async function titleCard(html, ms) { const d = document.createElement("div"); d.
 async function playReel() {
   const id = ++reelId, live = () => id === reelId;
   document.body.classList.add("reel-on");
-  reset(); S.profile.interests = []; S.profile.areas = [];
-  await titleCard(`<div class="emoji">🍳</div><div class="big">what's <span>cooking</span></div><div class="sub">one text a week. things happening near you.</div>`, 2600); if (!live()) return;
+  reset(); S.profile.interests = []; S.profile.areas = []; S.reel = true;
+  await titleCard(`<div class="emoji">🍳</div><div class="big">what's <span>cooking</span></div><div class="sub">things happening near you, every week. bring something to the table.</div>`, 2600); if (!live()) return;
 
   onboarding(0); caption("step 1", "tell us what you're <em>into</em>", "three quick questions, over text or in the app."); await wait(900);
   for (const c of ["cafe", "outdoors", "wellness", "community"]) { await tap(`[data-c="${c}"]`, 260); if (!live()) return; }
@@ -546,6 +663,18 @@ async function playReel() {
   if (second) { await tap(second, 1300); await tap("#join", 1800); await tap("#x", 600); }
   if (!live()) return;
 
+  caption("host your own", "everyone brings something to the <em>table</em>", "post a potluck or pickup game in seconds. neighbors see it in their sunday text.");
+  await tap('[data-f="for-you"]', 500); await tap('[data-v="map"]', 900);
+  await tap("#hostbtn", 900); if (!live()) return;
+  await typeInto("#ht", "sunday taco potluck"); $("#ht").dispatchEvent(new Event("input")); await wait(300);
+  await tap('#htype [data-k="potluck"]', 350); await tap('#hday [data-i="0"]', 350); await tap('#htime [data-h="18"]', 350);
+  await tap('#hhood [data-h="Capitol Hill"]', 450);
+  await tap("#post", 2200); if (!live()) return;
+  const mine = S.events.find((e) => e.id === S.fresh), mpin = document.querySelector(`.pin[data-id="${S.fresh}"]`);
+  if (mine && mpin) { caption("potluck", "see what everyone's <em>bringing</em>", "no more six salads."); await tap(mpin, 1300, () => openSheet(mine.id));
+    await smoothScroll($(".sheet"), 500, 900); await typeInto("#bi", "guac + chips"); await tap("#bf button", 1800, () => $("#bf").requestSubmit()); await tap("#x", 600); }
+  if (!live()) return;
+
   caption("my week", "your plans, <em>all in one place</em>");
   await tap('[data-t="week"]', 2400); if (!live()) return;
 
@@ -558,7 +687,7 @@ async function playReel() {
   finger().style.opacity = 0;
 
   await titleCard(`<div class="big">show up.<br>become a <span>regular.</span></div><div class="sub">find your people with what's cooking 🍳</div><div class="pill">built at DubHacks 2026 · iMessage via Photon · sample Seattle events</div>`, 4200);
-  document.body.classList.remove("reel-on"); finger().style.opacity = 0;
+  document.body.classList.remove("reel-on"); finger().style.opacity = 0; S.reel = false;
 }
 $("#play").onclick = playReel;
 if (location.hash === "#autoplay") setTimeout(playReel, 600);

@@ -146,6 +146,28 @@ canvas.confetti { position: absolute; inset: 0; z-index: 45; pointer-events: non
 .c-cafe { background: #f6e6d3; } .c-sports { background: #f9dcdc; } .c-swim { background: #dcebf4; } .c-outdoors { background: #dfecd8; }
 .c-music { background: #e9e0f4; } .c-food { background: #f8dfe4; } .c-art { background: #f6e1ec; } .c-wellness { background: #dcefe8; } .c-community { background: #f6edd2; }
 
+/* ---- hosting, potlucks, live link */
+.fab { all: unset; cursor: pointer; position: absolute; right: 18px; bottom: 92px; z-index: 11; padding: 13px 18px; border-radius: 999px; background: var(--sage); color: #fff; font-weight: 900; font-size: 14px; box-shadow: 0 10px 24px #6f8c6b55; animation: pop .5s .3s both; }
+.fab:active { transform: scale(.96); } .fab:focus-visible { outline: 3px solid var(--accent); outline-offset: 3px; }
+.field { width: 100%; box-sizing: border-box; border: 1.5px solid var(--line); background: var(--card); border-radius: 16px; padding: 13px 14px; font: 700 16px var(--body); color: var(--text); outline: none; }
+.field:focus { border-color: var(--sage); }
+.field::placeholder { color: #c2b9ae; }
+.hostgrid { display: grid; gap: 10px; }
+.chipset.sm .pick { padding: 8px 12px; font-size: 13px; }
+.pin.nb circle.bg { stroke: #d98a9a; }
+.pin.fresh circle.bg { animation: fresh 1.2s ease-in-out 3; transform-box: fill-box; transform-origin: center; }
+@keyframes fresh { 50% { transform: scale(1.35); } }
+.potluck { background: var(--blush-3); border-radius: 20px; padding: 12px 14px; display: grid; gap: 8px; }
+.dishes { display: flex; flex-wrap: wrap; gap: 6px; }
+.dish { padding: 6px 11px; border-radius: 999px; background: #fff; font-size: 12.5px; font-weight: 800; color: #8c4b5a; animation: pop .35s both; }
+.bringform { display: grid; grid-template-columns: 1fr auto; gap: 8px; }
+.bringform .field { padding: 10px 12px; font-size: 14px; }
+.bringform button { all: unset; cursor: pointer; padding: 0 16px; border-radius: 999px; background: var(--accent); color: #fff; font-weight: 900; font-size: 13px; }
+.livepill { display: none; justify-self: start; align-items: center; gap: 8px; padding: 8px 14px; border-radius: 999px; background: #ffffffcc; font-weight: 800; font-size: 13px; color: #4f6b4c; box-shadow: var(--shadow); }
+.livepill i { width: 8px; height: 8px; border-radius: 50%; background: #6fbf73; animation: blink 1.6s infinite; }
+@keyframes blink { 50% { opacity: .3; } }
+.is-live .livepill { display: inline-flex; }
+
 /* ---- autoplay demo reel */
 .playbtn { all: unset; cursor: pointer; justify-self: start; padding: 12px 20px; border-radius: 999px; background: var(--text); color: #fff; font-weight: 800; font-size: 14px; box-shadow: var(--shadow); }
 .playbtn:focus-visible { outline: 3px solid var(--accent); outline-offset: 3px; }
@@ -173,7 +195,8 @@ canvas.confetti { position: absolute; inset: 0; z-index: 45; pointer-events: non
 <div class="stage">
   <aside class="rail">
     <div><div class="brand">what's <span>cooking</span></div>
-      <div class="tag">every week, a few things happening near you. tap to show up, keep showing up, find your people.</div></div>
+      <div class="tag">a few things happening near you, every week. show up, host your own, and bring something to the table.</div></div>
+    <div class="livepill" id="livepill"><i></i>live · synced with the iMessage bot</div>
     <ol class="steps" id="steps"></ol>
     <button class="playbtn" id="play">▶ play demo reel</button>
     <div class="cap" id="cap"></div>
@@ -191,7 +214,7 @@ canvas.confetti { position: absolute; inset: 0; z-index: 45; pointer-events: non
 
 <script>/*CORE*/</script>
 <script>
-const { rankEvents, nearestArea, areasOf, EVENTS, AREAS } = Core;
+const { rankEvents, nearestArea, areasOf, createHostedEvent, parseHostText, zonedToUtc, EVENTS, AREAS } = Core;
 const NOW = new Date("2026-10-18T05:00:00.000Z"); // demo "now": Sat Oct 17, 10 PM PT
 const TZ = "America/Los_Angeles";
 const $ = (s, r = document) => r.querySelector(s);
@@ -214,7 +237,8 @@ reset();
 
 // ------------------------------------------------------------ shell
 const STEPS = [["Tell us what you're into", () => onboarding(0)], ["Discover on the map", () => go("discover", "map")], ["Browse the list", () => go("discover", "list")],
-  ["Join and show up", () => { go("discover", "list"); setTimeout(() => openSheet(forYou()[0].event.id), 350); }], ["Your week", () => go("week")], ["Weekly text", () => go("texts")]];
+  ["Join and show up", () => { go("discover", "list"); setTimeout(() => openSheet(forYou()[0].event.id), 350); }],
+  ["Host a potluck", () => { go("discover", "map"); setTimeout(openHost, 350); }], ["Your week", () => go("week")], ["Weekly text", () => go("texts")]];
 function rail(i) { $("#steps").innerHTML = STEPS.map(([s], k) => `<li><button data-i="${k}" class="${k === i ? "on" : ""}"><b>${k + 1}</b>${s}</button></li>`).join(""); }
 $("#steps").addEventListener("click", (e) => { const b = e.target.closest("button"); if (b) STEPS[+b.dataset.i][1](); });
 function fit() { const w = $("#wrap"), k = Math.min(1, (innerHeight - 48) / 844, (innerWidth - 32) / 390);
@@ -227,6 +251,7 @@ function screen(html) { closeSheet(true); const s = $("#screen"); s.className = 
 const forYou = (limit = 5) => rankEvents(S.events, S.profile, NOW, { limit });
 function visible() {
   if (S.filter === "for-you") return forYou(6);
+  if (S.filter === "potluck") return rankEvents(S.events, { ...S.profile, maxDistanceKm: 40, interests: ["food", "community"], maxBudget: undefined }, NOW, { limit: 99 }).filter((p) => p.event.potluck || p.event.hostedBy === "neighbor");
   return rankEvents(S.events, { ...S.profile, maxDistanceKm: 40, interests: [S.filter] }, NOW, { limit: 99 }).filter((p) => p.event.category === S.filter);
 }
 const ev = (id) => S.events.find((e) => e.id === id);
@@ -275,15 +300,16 @@ function go(tab, view) { S.tab = tab; if (view) S.view = view; ({ discover, week
 // ------------------------------------------------------------ 2/3. discover
 function discover() {
   rail(S.view === "map" ? 1 : 2);
-  const chips = [["for-you","✨ for you"], ...CATS.map(([c, e]) => [c, `${e} ${c}`])];
+  const chips = [["for-you","✨ for you"], ["potluck","🥘 potlucks & neighbors"], ...CATS.map(([c, e]) => [c, `${e} ${c}`])];
   screen(`
     <div class="top">
       <div><div class="kicker">this week near ${whereLabel()}</div><h1>what's <em>happening</em></h1></div>
       <div class="seg"><button data-v="map" class="${S.view === "map" ? "on" : ""}">Map</button><button data-v="list" class="${S.view === "list" ? "on" : ""}">List</button></div>
       <div class="filters">${chips.map(([k, l]) => `<button data-f="${k}" class="${S.filter === k ? "on" : ""}">${l}</button>`).join("")}</div>
     </div>
-    <div class="body" id="body"></div>${tabs()}`);
+    <div class="body" id="body"></div><button class="fab" id="hostbtn">＋ host something</button>${tabs()}`);
   bindTabs();
+  $("#hostbtn").onclick = openHost;
   $(".seg").onclick = (e) => { const b = e.target.closest("button"); if (b) { S.view = b.dataset.v; discover(); } };
   $(".filters").onclick = (e) => { const b = e.target.closest("button"); if (!b) return; S.filter = b.dataset.f;
     $(".filters").querySelectorAll("button").forEach((x) => x.classList.toggle("on", x === b)); S.view === "map" ? drawMap() : drawList(); };
@@ -337,7 +363,7 @@ function drawMap() {
   const v = S.view0, k = v.w / 140;
   const pins = S.events.filter((e) => Date.parse(e.start) > NOW.getTime()).map((e) => {
     const [x, y] = P(e.lat, e.lng), on = shown.has(e.id), r = 8 * k;
-    return `<g class="pin ${on ? "" : "dim"} ${S.joined.has(e.id) ? "joined" : ""}" data-id="${e.id}" transform="translate(${x},${y})">
+    return `<g class="pin ${on ? "" : "dim"} ${S.joined.has(e.id) ? "joined" : ""} ${e.hostedBy === "neighbor" ? "nb" : ""} ${S.fresh === e.id ? "fresh" : ""}" data-id="${e.id}" transform="translate(${x},${y})">
       ${S.joined.has(e.id) ? `<circle class="ring" r="${r + 3 * k}" stroke-width="${1.8 * k}"/>` : ""}
       <circle class="bg" r="${r}" fill="${COLORS[e.category]}" stroke-width="${2 * k}"/>
       <text style="font-size:${9.5 * k}px">${e.emoji}</text></g>`; }).join("");
@@ -345,7 +371,7 @@ function drawMap() {
     return `<g class="me" transform="translate(${x},${y})"><circle class="pulse" r="${7 * k}"/><circle r="${4 * k}" fill="#d98a9a" stroke="#fff" stroke-width="${1.4 * k}"/></g>`; }).join("");
   const [gx, gy] = P(47.6805, -122.336);
   body.innerHTML = `<div class="map" id="map">
-    <div class="maplegend">${picks.length} ${S.filter === "for-you" ? "picks for you" : S.filter} · sample events</div>
+    <div class="maplegend">${picks.length} ${S.filter === "for-you" ? "picks for you" : S.filter === "potluck" ? "neighbor-hosted" : S.filter} · pink rim = hosted by a neighbor</div>
     <div class="mapctl"><button id="zi" aria-label="Zoom in">+</button><button id="zo" aria-label="Zoom out">−</button><button id="zc" aria-label="Recenter">◎</button></div>
     <svg id="svg" viewBox="${v.x} ${v.y} ${v.w} ${v.h}" preserveAspectRatio="xMidYMid slice">
       ${PARKS.map(([la, ln, a, b]) => { const [x, y] = P(la, ln); return `<ellipse class="park" cx="${x}" cy="${y}" rx="${b * KX}" ry="${a * KY}"/>`; }).join("")}
@@ -383,12 +409,12 @@ function openSheet(id) {
   rail(3);
   const e = ev(id), d = distTo(e);
   const p = rankEvents(S.events, { ...S.profile, maxDistanceKm: 99, maxBudget: undefined, when: [] }, NOW, { limit: 99 }).find((x) => x.event.id === id);
-  const n = +id.slice(1);
+  const n = [...id].reduce((a, c) => a + c.charCodeAt(0), 0);
   const avs = Array.from({ length: Math.min(5, e.going) }, (_, i) => `<div class="av" style="background:${AVC[(i + n) % AVC.length]}">${"ABCDEFGHJKLMNPRSTW"[(i * 7 + n) % 18]}</div>`).join("");
   closeSheet(true);
   $("#phone").insertAdjacentHTML("beforeend", `<div class="scrim" id="scrim"></div><div class="sheet" role="dialog" aria-label="${e.title}">
     <div class="grab"></div><button class="close" id="x" aria-label="Close">✕</button>
-    <div class="hero c-${e.category}"><span class="sample">sample event</span>${e.emoji}</div>
+    <div class="hero c-${e.category}"><span class="sample">${e.hostedBy === "neighbor" ? "🏡 hosted by a neighbor" : "sample event"}${e.isSample && e.hostedBy ? " · sample" : ""}</span>${e.emoji}</div>
     <div><div class="kicker">${e.host}</div><h2>${e.title}</h2></div>
     <div class="facts">
       <div>🗓 ${fmt(e.start, { weekday: "long", month: "short", day: "numeric" })} · ${time(e.start)} – ${time(e.end)}</div>
@@ -398,26 +424,111 @@ function openSheet(id) {
     <div class="people"><div class="avs">${avs}</div><span id="cnt">${e.going} going · ${e.capacity - e.going} spots left</span></div>
     <div class="bar"><i id="fill" style="width:${(e.going / e.capacity) * 100}%"></i></div>
     ${e.recurring ? `<div class="regular">🔁 Happens <b>${e.recurring}</b>. Come three times and you're a regular. We can save your spot each week.</div>` : ""}
+    ${e.potluck ? `<div class="potluck" id="pot"></div>` : ""}
     ${p?.reasons?.length ? `<div class="kicker">why it's for you: ${p.reasons.join(" · ")}</div>` : ""}
     <div class="row"><button class="ghost" id="share">↗ invite</button><button class="cta" id="join"></button></div>
   </div>`);
   const label = () => { $("#join").textContent = S.joined.has(id) ? "✓ you're going · tap to leave" : "I'm going"; };
   label();
+  const pot = () => { const el = $("#pot"); if (!el) return;
+    el.innerHTML = `<div class="label">🥘 potluck · bringing so far</div>
+      <div class="dishes">${(e.bringing ?? []).map((d) => `<span class="dish">${esc(d)}</span>`).join("") || `<span class="kicker">nothing yet, be the first!</span>`}</div>
+      ${S.joined.has(id) ? `<form class="bringform" id="bf"><input class="field" id="bi" placeholder="I'll bring…" autocomplete="off" aria-label="What you're bringing"><button>add</button></form>`
+        : `<div class="kicker">join to add what you're bringing</div>`}`;
+    $("#bf")?.addEventListener("submit", (x) => { x.preventDefault(); const dish = $("#bi").value.trim(); if (!dish) return;
+      e.bringing = [...(e.bringing ?? []), dish]; pot(); toast(`yum! ${dish} added 🥘`);
+      if (S.live && !S.reel) api("/api/bring", { id, dish }); }); };
+  pot();
   $("#scrim").onclick = () => closeSheet(); $("#x").onclick = () => closeSheet();
   $("#share").onclick = () => toast("invite link copied (demo)");
   $("#join").onclick = () => {
     if (S.joined.has(id)) { S.joined.delete(id); e.going--; toast("you're off the list"); }
-    else { if (e.going >= e.capacity) return toast("this one's full"); S.joined.add(id); e.going++; confetti(); toast(`you're in! ${e.going - 1} others going`); }
-    label();
+    else { if (e.going >= e.capacity) return toast("this one's full"); S.joined.add(id); e.going++; confetti(); toast(e.potluck ? "you're in! tell us what you're bringing 🥘" : `you're in! ${e.going - 1} others going`); }
+    if (S.live && !S.reel) api("/api/join", { id, join: S.joined.has(id) });
+    label(); pot();
     $("#cnt").textContent = `${e.going} going · ${e.capacity - e.going} spots left`;
     $("#fill").style.width = `${(e.going / e.capacity) * 100}%`;
     refreshTabs();
   };
 }
 
+// ------------------------------------------------------------ host something (everyone brings something)
+const HOST_TYPES = [["potluck", "🥘 potluck", "food"], ["game", "🏓 pickup game", "sports"], ["walk", "🚶 walk", "outdoors"], ["hang", "✨ hangout", "community"]];
+const HOST_TIMES = [[10, "10am"], [13, "1pm"], [16, "4pm"], [18, "6pm"], [19, "7pm"]];
+function weekDays() { // the 7 days after "now", in Pacific time
+  return Array.from({ length: 7 }, (_, i) => { const d = new Date(NOW.getTime() + (i + 1) * 864e5 - 6 * 3600e3);
+    const p = new Intl.DateTimeFormat("en-US", { timeZone: TZ, year: "numeric", month: "numeric", day: "numeric", weekday: "short" }).formatToParts(d);
+    const g = (k) => p.find((x) => x.type === k).value; return { y: +g("year"), m: +g("month"), d: +g("day"), label: `${g("weekday").toLowerCase()} ${g("day")}` }; });
+}
+function openHost() {
+  rail(4);
+  const H = { title: "", type: "potluck", day: null, hour: null, hood: areasOf(S.profile)[0]?.label ?? "Capitol Hill" };
+  const days = weekDays();
+  closeSheet(true);
+  $("#phone").insertAdjacentHTML("beforeend", `<div class="scrim" id="scrim"></div><div class="sheet" role="dialog" aria-label="Host something">
+    <div class="grab"></div><button class="close" id="x" aria-label="Close">✕</button>
+    <div><div class="kicker">everyone brings something to the table</div><h2>host something</h2></div>
+    <div class="hostgrid"><label class="label" for="ht">what is it?</label><input class="field" id="ht" placeholder="sunday soup potluck" autocomplete="off" maxlength="60"></div>
+    <div class="chipset sm" id="htype">${HOST_TYPES.map(([k, l]) => `<button class="pick ${H.type === k ? "on" : ""}" data-k="${k}">${l}</button>`).join("")}</div>
+    <div class="label">when</div>
+    <div class="chipset sm" id="hday">${days.map((d, i) => `<button class="pick" data-i="${i}">${d.label}</button>`).join("")}</div>
+    <div class="chipset sm" id="htime">${HOST_TIMES.map(([h, l]) => `<button class="pick" data-h="${h}">${l}</button>`).join("")}</div>
+    <div class="label">where</div>
+    <div class="chipset sm" id="hhood">${HOODS.map((h) => `<button class="pick ${H.hood === h ? "on" : ""}" data-h="${h}">📍 ${h}</button>`).join("")}</div>
+    <button class="cta" id="post" disabled>post it 🍳</button>
+    <div class="kicker" style="text-align:center">it shows up on the map now and in neighbors' sunday texts.</div>
+  </div>`);
+  const ok = () => { $("#post").disabled = !(H.title.trim() && H.day !== null && H.hour !== null && H.hood); };
+  const one = (box, el) => box.querySelectorAll(".pick").forEach((x) => x.classList.toggle("on", x === el));
+  $("#ht").oninput = (x) => { H.title = x.target.value; ok(); };
+  $("#htype").onclick = (x) => { const b = x.target.closest(".pick"); if (!b) return; H.type = b.dataset.k; one($("#htype"), b); };
+  $("#hday").onclick = (x) => { const b = x.target.closest(".pick"); if (!b) return; H.day = +b.dataset.i; one($("#hday"), b); ok(); };
+  $("#htime").onclick = (x) => { const b = x.target.closest(".pick"); if (!b) return; H.hour = +b.dataset.h; one($("#htime"), b); ok(); };
+  $("#hhood").onclick = (x) => { const b = x.target.closest(".pick"); if (!b) return; H.hood = b.dataset.h; one($("#hhood"), b); ok(); };
+  $("#scrim").onclick = () => closeSheet(); $("#x").onclick = () => closeSheet();
+  $("#post").onclick = async () => {
+    const d = days[H.day], a = AREAS[H.hood.toLowerCase()], t = HOST_TYPES.find((x) => x[0] === H.type);
+    const input = { title: H.title.trim(), start: zonedToUtc(d.y, d.m, d.d, H.hour, 0, TZ).toISOString(), place: `near ${H.hood}`, neighborhood: H.hood,
+      lat: a.lat + (Math.random() - .5) * .004, lng: a.lng + (Math.random() - .5) * .006, potluck: H.type === "potluck", category: t[2], hostName: "you" };
+    let e = createHostedEvent(input);
+    if (S.live && !S.reel) { const r = await api("/api/host", input); if (r?.event) e = r.event; }
+    S.events = S.events.filter((x) => x.id !== e.id).concat(e); S.joined.add(e.id); S.fresh = e.id;
+    closeSheet(true); confetti(); toast("posted! neighbors will see it sunday 🍳");
+    S.filter = "potluck"; S.view = "map";
+    const [x, y] = P(e.lat, e.lng); S.view0 = { x: x - 70, y: y - 75, w: 140, h: 150 };
+    go("discover", "map");
+  };
+}
+
+// ------------------------------------------------------------ live link with the iMessage bot (only when it's running on this laptop)
+const API = "http://localhost:8787";
+let liveVersion = -1;
+async function api(path, body) {
+  try { const r = await fetch(API + path, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(body) }); const j = await r.json(); sync(); return j; }
+  catch { return null; }
+}
+async function sync() {
+  if (S.reel) return;
+  try {
+    const r = await fetch(API + "/api/state", { cache: "no-store" }); if (!r.ok) throw new Error();
+    const st = await r.json();
+    if (!S.live) { S.live = true; document.body.classList.add("is-live"); }
+    if (st.version === liveVersion) return;
+    const before = new Set(S.joined), first = liveVersion < 0;
+    liveVersion = st.version;
+    S.events = st.events; if (st.me) S.joined = new Set(st.me.joined);
+    if (!first && [...S.joined].some((id) => !before.has(id))) toast("📲 synced from iMessage");
+    if ($(".sheet")) { refreshTabs(); return; } // don't yank a sheet out from under someone
+    if (S.tab === "discover" && $("#body")) S.view === "map" ? drawMap() : drawList();
+    else if (S.tab === "week") week();
+    refreshTabs();
+  } catch { if (S.live) { S.live = false; document.body.classList.remove("is-live"); } }
+}
+if (location.protocol !== "https:" || location.hostname === "localhost") { sync(); setInterval(sync, 2500); }
+
 // ------------------------------------------------------------ 5. my week
 function week() {
-  rail(4);
+  rail(5);
   const mine = [...S.joined].map(ev).sort((a, b) => Date.parse(a.start) - Date.parse(b.start));
   const days = {};
   for (const e of mine) (days[fmt(e.start, { weekday: "long", month: "short", day: "numeric" })] ??= []).push(e);
@@ -441,11 +552,11 @@ function digestText(picks) {
     "\n\nreply a number to join (like 1), INFO 2 for details, or MORE.";
 }
 function texts() {
-  rail(5);
+  rail(6);
   if (!S.texts) { const picks = forYou(); S.texts = { list: picks.map((p) => p.event.id), msgs: [["ts", "Sunday 9:00 AM"], ["them", "good morning ☀️ here's your week:"], ["them", digestText(picks)]] }; }
   screen(`<div class="imsg"><div class="imsg-head"><div class="av">🍳</div><span>What's Cooking</span></div>
     <div class="thread" id="th">${S.texts.msgs.map(([w, t]) => w === "ts" ? `<div class="ts">${t}</div>` : `<div class="b ${w}">${esc(t)}</div>`).join("")}</div></div>
-    <div class="quick" id="quick">${["1","INFO 2","MORE","something outdoorsy","MY"].map((q) => `<button type="button">${q}</button>`).join("")}</div>
+    <div class="quick" id="quick">${["1","INFO 2","MORE","something outdoorsy","HOST taco potluck sat 6pm cal anderson","MY"].map((q) => `<button type="button">${q}</button>`).join("")}</div>
     <form class="compose" id="cf"><input id="ci" placeholder="iMessage" autocomplete="off" aria-label="Message What's Cooking"><button aria-label="Send">↑</button></form>${tabs()}`);
   bindTabs();
   const th = $("#th"); th.scrollTop = th.scrollHeight;
@@ -468,6 +579,12 @@ function reply(t) {
   if (up === "MORE") { const p = rankEvents(S.events, S.profile, NOW, { limit: 5, excludeIds: new Set([...L, ...S.joined]) }); if (!p.length) return "that's everything for this week!"; S.texts.list = p.map((x) => x.event.id); return digestText(p); }
   if (up === "MY") { const m = [...S.joined].map(ev); return m.length ? "your plans:\n\n" + m.map((e) => `${e.emoji} ${e.title}, ${dayShort(e.start)} ${time(e.start)}`).join("\n") : "nothing yet. text EVENTS to find something."; }
   if (up === "EVENTS") { const p = forYou(); S.texts.list = p.map((x) => x.event.id); return digestText(p); }
+  if (/^HOST\b/.test(up)) { const r = parseHostText(t, NOW); if (!r.ok) return "love that you want to host! try something like:\nHOST taco potluck sat 6pm cal anderson";
+    const e = createHostedEvent({ ...r.input, hostName: "you" }); S.events.push(e); S.joined.add(e.id); refreshTabs();
+    return `posted! ${e.emoji} ${e.title}\n${fmt(e.start, { weekday: "long" })}, ${time(e.start)} · ${e.place}\n\nit's on the map now and goes out in neighbors' weekly texts.${e.potluck ? " guests can reply BRING <dish> 🥘" : ""}`; }
+  const br = t.match(/^bring\s+(.+)/i);
+  if (br) { const e = [...S.joined].map(ev).reverse().find((x) => x?.potluck); if (!e) return "join a potluck first, then tell me what you're bringing!";
+    e.bringing = [...(e.bringing ?? []), br[1]]; return `yum, noted! 🥘 for ${e.title} so far: ${e.bringing.join(", ")}.`; }
   const mood = Object.keys(MOODS).filter((c) => MOODS[c].test(t));
   if (mood.length) { const p = rankEvents(S.events, { ...S.profile, interests: mood }, NOW, { limit: 5 }); if (!p.length) return "nothing like that fits your settings this week."; S.texts.list = p.map((x) => x.event.id); return digestText(p); }
   return "EVENTS · MORE · 1, 2, 3 to join · INFO 2 · MY · or text a mood like \"something outdoorsy\"";
@@ -512,8 +629,8 @@ async function titleCard(html, ms) { const d = document.createElement("div"); d.
 async function playReel() {
   const id = ++reelId, live = () => id === reelId;
   document.body.classList.add("reel-on");
-  reset(); S.profile.interests = []; S.profile.areas = [];
-  await titleCard(`<div class="emoji">🍳</div><div class="big">what's <span>cooking</span></div><div class="sub">one text a week. things happening near you.</div>`, 2600); if (!live()) return;
+  reset(); S.profile.interests = []; S.profile.areas = []; S.reel = true;
+  await titleCard(`<div class="emoji">🍳</div><div class="big">what's <span>cooking</span></div><div class="sub">things happening near you, every week. bring something to the table.</div>`, 2600); if (!live()) return;
 
   onboarding(0); caption("step 1", "tell us what you're <em>into</em>", "three quick questions, over text or in the app."); await wait(900);
   for (const c of ["cafe", "outdoors", "wellness", "community"]) { await tap(`[data-c="${c}"]`, 260); if (!live()) return; }
@@ -543,6 +660,18 @@ async function playReel() {
   if (second) { await tap(second, 1300); await tap("#join", 1800); await tap("#x", 600); }
   if (!live()) return;
 
+  caption("host your own", "everyone brings something to the <em>table</em>", "post a potluck or pickup game in seconds. neighbors see it in their sunday text.");
+  await tap('[data-f="for-you"]', 500); await tap('[data-v="map"]', 900);
+  await tap("#hostbtn", 900); if (!live()) return;
+  await typeInto("#ht", "sunday taco potluck"); $("#ht").dispatchEvent(new Event("input")); await wait(300);
+  await tap('#htype [data-k="potluck"]', 350); await tap('#hday [data-i="0"]', 350); await tap('#htime [data-h="18"]', 350);
+  await tap('#hhood [data-h="Capitol Hill"]', 450);
+  await tap("#post", 2200); if (!live()) return;
+  const mine = S.events.find((e) => e.id === S.fresh), mpin = document.querySelector(`.pin[data-id="${S.fresh}"]`);
+  if (mine && mpin) { caption("potluck", "see what everyone's <em>bringing</em>", "no more six salads."); await tap(mpin, 1300, () => openSheet(mine.id));
+    await smoothScroll($(".sheet"), 500, 900); await typeInto("#bi", "guac + chips"); await tap("#bf button", 1800, () => $("#bf").requestSubmit()); await tap("#x", 600); }
+  if (!live()) return;
+
   caption("my week", "your plans, <em>all in one place</em>");
   await tap('[data-t="week"]', 2400); if (!live()) return;
 
@@ -555,7 +684,7 @@ async function playReel() {
   finger().style.opacity = 0;
 
   await titleCard(`<div class="big">show up.<br>become a <span>regular.</span></div><div class="sub">find your people with what's cooking 🍳</div><div class="pill">built at DubHacks 2026 · iMessage via Photon · sample Seattle events</div>`, 4200);
-  document.body.classList.remove("reel-on"); finger().style.opacity = 0;
+  document.body.classList.remove("reel-on"); finger().style.opacity = 0; S.reel = false;
 }
 $("#play").onclick = playReel;
 if (location.hash === "#autoplay") setTimeout(playReel, 600);
