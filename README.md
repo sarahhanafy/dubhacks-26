@@ -1,23 +1,28 @@
-# DubHacks 26 — Community Connection App
+# Huddle
 
-Text-first assistant that turns "I want to hang out" into a confirmed outing. See `PRD.md`.
+Every week, Huddle texts you a few things happening near you, like pop-up cafés, open pickleball courts, swim meetups and group hikes. Reply with a number to join. The app shows the same events on a map and in a list, so it's easy to show up, keep showing up, and become a regular.
 
-## Run
+Built at DubHacks 2026 (Community Kitchen track) with Photon iMessage.
 
+## Try it
+
+**App demo (laptop):** `npm install && npm run demo:app`, then open `demo/index.html`.
+
+**iMessage bot:**
 ```bash
+cd huddle
 npm install
-npm test        # acceptance checks A1–A9 (domain level)
-npm run demo    # walks the §8 demo journey on labeled fixtures
+# .env needs PROJECT_ID and PROJECT_SECRET from the Photon dashboard (optional: GEMINI_API_KEY)
+npm run dev        # live over iMessage
+npm run sim        # offline rehearsal of a full conversation
 ```
+Text the project's number "hi". Huddle asks 3 quick questions (interests, neighborhood, when you're free and budget), then texts back 5 events near you. Commands: `1` to join · `INFO 2` · `MORE` · `MY` · `LEAVE` · `PREFS` · `STOP`, or text a mood like "something outdoorsy". It sends a digest every Sunday morning and a reminder 2 hours before anything you joined.
 
-## Layout
+## How it works
 
-- `src/domain/types.ts`: records (PRD §6)
-- `src/domain/matcher.ts`: deterministic feasibility and ranking (FR7–FR10); the LLM never decides this
-- `src/domain/lifecycle.ts`: outing state machine, proposal versions, outbox jobs (FR11–FR14)
-- `src/domain/projection.ts`: public plan allow-list; the only data groups and the LLM see
-- `src/fixtures/demo.ts`: 4-person sample circle and venues (labeled sample data)
+- `src/events/seattle.ts`: curated **sample** events for the demo week at real Seattle parks and neighborhoods (hosts and counts are illustrative).
+- `src/domain/discovery.ts`: deterministic ranking. Hard filters first (in the future, this week, under budget, within distance, matches when you're free, not full), then a transparent score: your interests, distance, free, beginner-friendly, recurring (easy to become a regular), sooner. At most two picks per category, for variety.
+- `huddle/src/bot.ts`: the iMessage conversation. Texting first is the opt-in, STOP is immediate, and an optional Gemini call only reads your own onboarding answers.
+- `demo/`: the phone-style app (map, list, event sheet, My week, and the weekly text) running the same ranking engine in the browser.
 
-## Next
-
-Photon adapter (verify DMs and group creation first), persistence with outbox transactions, and LLM request parsing into `Outing` and `PrivateResponse`.
+`npm test` runs the domain tests.

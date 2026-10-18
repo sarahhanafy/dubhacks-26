@@ -3,514 +3,459 @@
 <title>Huddle App Demo</title>
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Unbounded:wght@500;700;800&family=Manrope:wght@400;500;600;700&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Unbounded:wght@500;700;800&family=Manrope:wght@400;500;600;700;800&display=swap">
 <style>
-/* Layout: laptop stage with a journey rail on the left and a live iPhone on the right.
-   Single committed look: dusk-ink phone, sunset accents, one gradient per activity. */
+/* Layout: laptop stage, story rail left, live iPhone right. Phone has 3 tabs: Discover (map/list), My week, Texts.
+   Single committed look: dusk-ink UI, sunset coral accent, a hand-drawn night map of Seattle. */
 :root {
-  --desk: #0b0c10;
-  --desk-2: #15161d;
-  --ink: #111217;
-  --card: #1b1d24;
-  --card-2: #242731;
-  --line: #ffffff14;
-  --text: #f6f1ea;
-  --muted: #9a98a6;
-  --coral: #ff7a59;
-  --sun: #ffc857;
-  --mint: #7fe0c4;
+  --desk: #0b0c10; --desk-2: #15161d;
+  --ink: #111217; --card: #1b1d24; --card-2: #242731; --line: #ffffff14;
+  --text: #f6f1ea; --muted: #9a98a6;
+  --coral: #ff7a59; --sun: #ffc857; --mint: #7fe0c4;
+  --land: #171a21; --water: #1c2740; --park: #1b2a24; --road: #2a2e39;
   --display: "Unbounded", "Arial Black", system-ui, sans-serif;
   --body: "Manrope", system-ui, -apple-system, "Segoe UI", sans-serif;
   color-scheme: dark;
 }
 html, body { height: 100%; }
-body {
-  margin: 0; background: radial-gradient(80% 70% at 75% 40%, #2a1a2e 0%, transparent 60%), var(--desk);
-  color: var(--text); font-family: var(--body); overflow: hidden;
-  padding-left: max(16px, env(safe-area-inset-left, 0px));
-  padding-right: max(16px, env(safe-area-inset-right, 0px));
-  box-sizing: border-box;
-}
+body { margin: 0; background: radial-gradient(80% 70% at 75% 40%, #2a1a2e 0%, transparent 60%), var(--desk); color: var(--text); font-family: var(--body); overflow: hidden;
+  padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); box-sizing: border-box; }
+button { font: inherit; color: inherit; }
 .stage { height: 100%; display: grid; grid-template-columns: minmax(0, 340px) auto; gap: 6vw; align-items: center; justify-content: center; }
 @media (max-width: 820px) { .stage { grid-template-columns: auto; } .rail { display: none; } }
 
-/* journey rail */
-.rail { display: grid; gap: 28px; }
-.brand { font: 800 44px/1 var(--display); letter-spacing: -.03em; }
-.brand span { color: var(--coral); }
+.rail { display: grid; gap: 26px; }
+.brand { font: 800 44px/1 var(--display); letter-spacing: -.03em; } .brand span { color: var(--coral); }
 .tag { color: var(--muted); font-size: 16px; line-height: 1.5; max-width: 30ch; margin-top: 12px; }
-.steps { list-style: none; margin: 0; padding: 0; display: grid; gap: 4px; counter-reset: s; }
+.steps { list-style: none; margin: 0; padding: 0; display: grid; gap: 4px; }
 .steps button { all: unset; cursor: pointer; display: grid; grid-template-columns: 28px 1fr; gap: 12px; align-items: center; padding: 10px 12px; border-radius: 12px; color: var(--muted); font-weight: 600; font-size: 15px; transition: background .25s, color .25s; }
 .steps button:hover, .steps button:focus-visible { background: var(--desk-2); color: var(--text); }
-.steps button b { width: 28px; height: 28px; border-radius: 50%; display: grid; place-items: center; font: 700 12px var(--display); background: var(--desk-2); color: var(--muted); transition: background .3s, color .3s; }
-.steps button.on { color: var(--text); background: var(--desk-2); }
-.steps button.on b { background: var(--coral); color: var(--ink); }
-.steps button.done b { background: #ff7a5933; color: var(--coral); }
+.steps button b { width: 28px; height: 28px; border-radius: 50%; display: grid; place-items: center; font: 700 12px var(--display); background: var(--desk-2); }
+.steps button.on { color: var(--text); background: var(--desk-2); } .steps button.on b { background: var(--coral); color: var(--ink); }
 .fine { color: var(--muted); font-size: 12px; line-height: 1.5; max-width: 34ch; }
 
-/* phone */
 .phone-wrap { width: 390px; height: 844px; transform-origin: center; }
 .phone { position: relative; width: 390px; height: 844px; border-radius: 56px; background: var(--ink); overflow: hidden;
   box-shadow: 0 0 0 11px #1d1e24, 0 0 0 12px #34353d, 0 40px 120px #000c, 0 0 160px #ff7a5922; }
-.island { position: absolute; top: 11px; left: 50%; translate: -50% 0; width: 122px; height: 35px; border-radius: 20px; background: #000; z-index: 20; }
-.statusbar { position: absolute; inset: 0 0 auto; height: 54px; display: flex; justify-content: space-between; align-items: center; padding: 6px 34px 0; font: 600 16px var(--body); z-index: 15; }
-.statusbar i { display: inline-flex; gap: 6px; align-items: center; font-style: normal; }
-.homebar { position: absolute; bottom: 8px; left: 50%; translate: -50% 0; width: 136px; height: 5px; border-radius: 3px; background: #ffffffcc; z-index: 20; }
-.blob { position: absolute; width: 380px; height: 380px; border-radius: 50%; filter: blur(70px); opacity: .45; z-index: 0; animation: drift 14s ease-in-out infinite alternate; pointer-events: none; }
-.blob.a { background: var(--coral); top: -160px; left: -120px; }
-.blob.b { background: #7b5cff; bottom: -180px; right: -160px; animation-delay: -6s; opacity: .3; }
-@keyframes drift { to { transform: translate(60px, 80px) scale(1.15); } }
-.screen { position: absolute; inset: 54px 0 0; padding: 12px 22px 40px; display: flex; flex-direction: column; gap: 16px; z-index: 5; overflow: hidden; }
-.screen.enter { animation: enter .55s cubic-bezier(.2, .9, .2, 1) both; }
-@keyframes enter { from { transform: translateX(40px); opacity: 0; } }
-.rise { animation: rise .6s cubic-bezier(.2, .9, .2, 1) both; }
-@keyframes rise { from { transform: translateY(18px); opacity: 0; } }
+.island { position: absolute; top: 11px; left: 50%; translate: -50% 0; width: 122px; height: 35px; border-radius: 20px; background: #000; z-index: 40; }
+.statusbar { position: absolute; inset: 0 0 auto; height: 54px; display: flex; justify-content: space-between; align-items: center; padding: 6px 34px 0; font: 600 16px var(--body); z-index: 35; pointer-events: none; }
+.homebar { position: absolute; bottom: 8px; left: 50%; translate: -50% 0; width: 136px; height: 5px; border-radius: 3px; background: #ffffffcc; z-index: 40; }
+.screen { position: absolute; inset: 54px 0 0; display: flex; flex-direction: column; z-index: 5; }
+.enter { animation: enter .5s cubic-bezier(.2,.9,.2,1) both; }
+@keyframes enter { from { transform: translateX(36px); opacity: 0; } }
+@keyframes rise { from { transform: translateY(16px); opacity: 0; } }
 @keyframes pop { 0% { transform: scale(.6); opacity: 0 } 70% { transform: scale(1.08) } 100% { transform: scale(1); opacity: 1 } }
+.rise { animation: rise .55s cubic-bezier(.2,.9,.2,1) both; }
 
-h1 { font: 700 30px/1.08 var(--display); letter-spacing: -.03em; margin: 0; text-wrap: balance; }
-h1 em { font-style: normal; color: var(--coral); }
-.kicker { font-size: 13px; color: var(--muted); font-weight: 600; letter-spacing: .02em; }
-.label { font-size: 11px; letter-spacing: .12em; text-transform: uppercase; color: var(--muted); font-weight: 700; }
+h1 { font: 700 28px/1.08 var(--display); letter-spacing: -.03em; margin: 0; text-wrap: balance; } h1 em { font-style: normal; color: var(--coral); }
+h2 { font: 700 18px var(--display); letter-spacing: -.02em; margin: 0; }
+.kicker { font-size: 13px; color: var(--muted); font-weight: 700; }
+.label { font-size: 11px; letter-spacing: .12em; text-transform: uppercase; color: var(--muted); font-weight: 800; }
+.cta { all: unset; cursor: pointer; text-align: center; padding: 17px; border-radius: 18px; background: var(--coral); color: var(--ink); font: 700 15px var(--display); transition: transform .15s, opacity .2s; box-sizing: border-box; }
+.cta:active { transform: scale(.97); } .cta:focus-visible { outline: 3px solid var(--sun); outline-offset: 3px; } .cta[disabled] { opacity: .35; pointer-events: none; }
+.ghost { all: unset; cursor: pointer; text-align: center; padding: 14px; border-radius: 16px; background: var(--card-2); font-weight: 800; font-size: 14px; }
 
-.composer { background: var(--card); border: 1px solid var(--line); border-radius: 24px; padding: 18px; display: grid; gap: 14px; }
-.typed { font-size: 19px; line-height: 1.4; font-weight: 600; min-height: 54px; }
-.caret { display: inline-block; width: 2px; height: 20px; background: var(--coral); margin-left: 2px; vertical-align: -3px; animation: blinkc 1s steps(2) infinite; }
-@keyframes blinkc { 50% { opacity: 0; } }
-.chips { display: flex; flex-wrap: wrap; gap: 8px; min-height: 32px; }
-.chip { padding: 7px 12px; border-radius: 999px; background: var(--card-2); font-size: 13px; font-weight: 700; animation: pop .45s both; display: inline-flex; gap: 6px; align-items: center; }
-.chip i { font-style: normal; color: var(--muted); font-weight: 600; }
+.onb { flex: 1; display: flex; flex-direction: column; gap: 18px; padding: 16px 22px 40px; overflow-y: auto; scrollbar-width: none; }
+.chipset { display: flex; flex-wrap: wrap; gap: 8px; }
+.pick { all: unset; cursor: pointer; padding: 10px 14px; border-radius: 999px; background: var(--card); border: 1px solid var(--line); font-weight: 700; font-size: 14px; transition: background .2s, color .2s, transform .15s; }
+.pick:active { transform: scale(.95); } .pick:focus-visible { outline: 2px solid var(--coral); }
+.pick.on { background: var(--coral); color: var(--ink); border-color: transparent; }
+.dots { display: flex; gap: 6px; } .dots i { width: 22px; height: 4px; border-radius: 2px; background: var(--card-2); } .dots i.on { background: var(--coral); }
 
-.avatars { display: flex; }
-.av { width: 44px; height: 44px; border-radius: 50%; display: grid; place-items: center; font: 700 16px var(--display); color: var(--ink); border: 3px solid var(--ink); flex: none; position: relative; }
-.avatars .av + .av { margin-left: -10px; }
-.av.sm { width: 30px; height: 30px; font-size: 11px; border-width: 2px; }
-.av.sm + .av.sm { margin-left: -8px; }
-.c-sarah { background: #ffc857; } .c-amir { background: #7fe0c4; } .c-jenna { background: #f6a6c1; } .c-kai { background: #a9b8ff; }
-.circle-row { display: flex; align-items: center; justify-content: space-between; background: var(--card); border: 1px solid var(--line); border-radius: 20px; padding: 14px 16px; }
-.circle-row b { display: block; font-size: 15px; } .circle-row span { font-size: 13px; color: var(--muted); }
+.top { padding: 8px 22px 10px; display: grid; gap: 10px; }
+.seg { display: grid; grid-template-columns: 1fr 1fr; background: var(--card); border-radius: 14px; padding: 4px; }
+.seg button { all: unset; cursor: pointer; text-align: center; padding: 8px; border-radius: 10px; font-weight: 800; font-size: 13px; color: var(--muted); }
+.seg button.on { background: var(--card-2); color: var(--text); }
+.filters { display: flex; gap: 6px; overflow-x: auto; scrollbar-width: none; margin: 0 -22px; padding: 0 22px; }
+.filters button { all: unset; cursor: pointer; flex: none; padding: 7px 11px; border-radius: 999px; background: var(--card); font-size: 12.5px; font-weight: 800; color: var(--muted); }
+.filters button.on { background: var(--text); color: var(--ink); }
+.body { position: relative; flex: 1; min-height: 0; }
 
-.cta { all: unset; cursor: pointer; margin-top: auto; text-align: center; padding: 18px; border-radius: 20px; background: var(--coral); color: var(--ink); font: 700 16px var(--display); letter-spacing: -.01em; transition: transform .15s, opacity .3s; }
-.cta:active { transform: scale(.97); } .cta:focus-visible { outline: 3px solid var(--sun); outline-offset: 3px; }
-.cta[disabled] { opacity: .35; pointer-events: none; }
-.ghost { all: unset; cursor: pointer; text-align: center; padding: 14px; border-radius: 16px; background: var(--card-2); font-weight: 700; font-size: 14px; }
-.ghost:focus-visible { outline: 2px solid var(--coral); }
+.map { position: absolute; inset: 0; overflow: hidden; touch-action: none; cursor: grab; background: var(--land); }
+.map:active { cursor: grabbing; }
+.map svg { width: 100%; height: 100%; display: block; }
+.map .water { fill: var(--water); } .map .canal { stroke: var(--water); fill: none; stroke-linecap: round; }
+.map .park { fill: var(--park); } .map .road { stroke: var(--road); fill: none; stroke-linecap: round; stroke-linejoin: round; }
+.map .hood { fill: #ffffff38; font-family: var(--body); font-weight: 800; letter-spacing: .14em; text-transform: uppercase; text-anchor: middle; pointer-events: none; }
+.pin { cursor: pointer; }
+.pin circle.bg { stroke: var(--ink); }
+.pin text { text-anchor: middle; dominant-baseline: central; pointer-events: none; }
+.pin.dim { opacity: .28; }
+.pin.joined circle.ring { stroke: var(--mint); fill: none; }
+.me circle.pulse { fill: var(--coral); opacity: .25; animation: pulse 2s ease-out infinite; transform-box: fill-box; transform-origin: center; }
+@keyframes pulse { from { transform: scale(.6); opacity: .5 } to { transform: scale(2.2); opacity: 0 } }
+.mapctl { position: absolute; right: 14px; top: 14px; display: grid; gap: 6px; z-index: 3; }
+.mapctl button { all: unset; cursor: pointer; width: 36px; height: 36px; border-radius: 12px; background: #1b1d24e6; display: grid; place-items: center; font-weight: 800; font-size: 16px; }
+.maplegend { position: absolute; left: 14px; top: 14px; z-index: 3; background: #1b1d24e6; padding: 6px 10px; border-radius: 10px; font-size: 11px; font-weight: 700; color: var(--muted); }
 
-/* gathering */
-.orbit { position: relative; width: 250px; height: 250px; margin: 6px auto 0; }
-.orbit .core { position: absolute; inset: 85px; border-radius: 50%; background: radial-gradient(circle, var(--coral), #ff7a5900 70%); animation: pulse 1.6s ease-in-out infinite; }
-@keyframes pulse { 50% { transform: scale(1.25); opacity: .6; } }
-.orbit .ring { position: absolute; inset: 0; border-radius: 50%; border: 1px dashed #ffffff22; animation: spin 12s linear infinite; }
-.orbit .ring .av { position: absolute; }
-@keyframes spin { to { transform: rotate(360deg); } }
-.orbit .ring .av span { display: block; animation: spin 12s linear infinite reverse; }
-.replies { display: grid; gap: 8px; }
-.reply { display: flex; align-items: center; gap: 12px; background: var(--card); border-radius: 16px; padding: 10px 14px; font-weight: 600; font-size: 14px; }
-.reply .st { margin-left: auto; font-size: 12px; color: var(--muted); }
-.reply.in .st { color: var(--mint); animation: pop .4s both; }
-.privacy { font-size: 12px; color: var(--muted); display: flex; gap: 8px; align-items: center; line-height: 1.4; }
+.list { position: absolute; inset: 0; overflow-y: auto; padding: 4px 22px 100px; display: grid; gap: 10px; align-content: start; scrollbar-width: none; }
+.ev { all: unset; cursor: pointer; display: grid; grid-template-columns: 58px 1fr; gap: 12px; padding: 12px; border-radius: 20px; background: var(--card); border: 1px solid var(--line); animation: rise .45s both; box-sizing: border-box; }
+.ev:hover { border-color: #ffffff30; } .ev:focus-visible { outline: 2px solid var(--coral); }
+.tile { width: 58px; height: 58px; border-radius: 16px; display: grid; place-items: center; font-size: 28px; position: relative; overflow: hidden; }
+.tile::after { content: ""; position: absolute; inset: 0; background: radial-gradient(circle at 30% 20%, #ffffff55, transparent 60%); }
+.ev h3 { margin: 0; font: 700 14.5px/1.25 var(--display); letter-spacing: -.01em; }
+.ev .meta { font-size: 12.5px; color: var(--muted); font-weight: 700; margin-top: 3px; }
+.ev .why { font-size: 12px; color: var(--mint); font-weight: 700; margin-top: 5px; }
 
-/* options */
-.opts { display: grid; gap: 12px; overflow-y: auto; margin: 0 -4px; padding: 4px; scrollbar-width: none; }
-.opt { all: unset; cursor: pointer; display: grid; grid-template-columns: 92px 1fr; border-radius: 22px; background: var(--card); border: 1px solid var(--line); overflow: hidden; transition: transform .2s, border-color .2s; }
-.opt:hover { transform: translateY(-2px); border-color: #ffffff33; } .opt:focus-visible { outline: 2px solid var(--coral); }
-.art { display: grid; place-items: center; font-size: 40px; position: relative; }
-.art::after { content: ""; position: absolute; inset: 0; background: radial-gradient(circle at 30% 20%, #ffffff55, transparent 60%); }
-.g-pickleball { background: linear-gradient(150deg, #ffc857, #ff7a59); }
-.g-walk { background: linear-gradient(150deg, #7fe0c4, #3a86ff); }
-.g-pho { background: linear-gradient(150deg, #f6a6c1, #b05f9c); }
-.opt .body { padding: 14px 14px 14px 16px; display: grid; gap: 6px; min-width: 0; }
-.opt h3 { margin: 0; font: 700 15px var(--display); letter-spacing: -.01em; }
-.meta { font-size: 12.5px; color: var(--muted); font-weight: 600; display: flex; flex-wrap: wrap; gap: 4px 10px; }
-.meta b { color: var(--text); }
-.why { font-size: 12.5px; line-height: 1.4; }
-.mine { font-size: 11.5px; color: var(--mint); font-weight: 700; display: flex; gap: 6px; align-items: center; }
-.badge { position: absolute; top: 8px; left: 8px; z-index: 2; font-size: 9px; font-weight: 800; letter-spacing: .08em; text-transform: uppercase; background: #0008; color: #fff; padding: 3px 6px; border-radius: 6px; }
+.sheet { position: absolute; left: 0; right: 0; bottom: 0; z-index: 20; background: var(--card); border-radius: 28px 28px 0 0; padding: 10px 22px 34px; display: grid; gap: 12px; box-shadow: 0 -20px 60px #0009; animation: up .45s cubic-bezier(.2,.9,.2,1) both; max-height: 82%; overflow-y: auto; scrollbar-width: none; }
+@keyframes up { from { transform: translateY(100%); } }
+.grab { width: 40px; height: 5px; border-radius: 3px; background: #ffffff33; justify-self: center; }
+.sheet .hero { height: 110px; border-radius: 20px; display: grid; place-items: center; font-size: 54px; position: relative; overflow: hidden; }
+.sheet .hero::after { content: ""; position: absolute; inset: 0; background: radial-gradient(circle at 30% 20%, #ffffff55, transparent 60%); }
+.sheet .sample { position: absolute; top: 10px; left: 10px; z-index: 2; font-size: 9px; font-weight: 800; letter-spacing: .08em; text-transform: uppercase; background: #0009; color: #fff; padding: 3px 7px; border-radius: 6px; }
+.facts { display: grid; gap: 6px; font-size: 14px; font-weight: 600; } .facts span { color: var(--muted); }
+.bar { height: 8px; border-radius: 4px; background: var(--card-2); overflow: hidden; } .bar i { display: block; height: 100%; background: var(--coral); border-radius: 4px; transition: width .6s cubic-bezier(.2,.9,.2,1); }
+.people { display: flex; align-items: center; gap: 10px; font-size: 13px; color: var(--muted); font-weight: 700; }
+.av { width: 28px; height: 28px; border-radius: 50%; display: grid; place-items: center; font: 700 11px var(--display); color: var(--ink); border: 2px solid var(--card); flex: none; }
+.avs { display: flex; } .avs .av + .av { margin-left: -8px; }
+.regular { background: var(--card-2); border-radius: 16px; padding: 12px 14px; font-size: 13px; line-height: 1.45; font-weight: 600; } .regular b { color: var(--sun); }
+.sheet .row { display: grid; grid-template-columns: auto 1fr; gap: 8px; }
+.close { all: unset; cursor: pointer; position: absolute; top: 14px; right: 16px; width: 30px; height: 30px; border-radius: 50%; background: var(--card-2); display: grid; place-items: center; font-weight: 800; z-index: 3; }
+.scrim { position: absolute; inset: 0; background: #0006; z-index: 15; animation: fade .3s both; } @keyframes fade { from { opacity: 0 } }
 
-/* confirm */
-.plan { border-radius: 28px; overflow: hidden; background: var(--card); border: 1px solid var(--line); }
-.plan .hero { height: 130px; position: relative; display: grid; place-items: center; font-size: 62px; }
-.plan .hero .ver { position: absolute; top: 14px; right: 14px; background: #0009; color: #fff; font: 700 11px var(--display); padding: 6px 10px; border-radius: 999px; }
-.plan .info { padding: 16px 18px; display: grid; gap: 4px; }
-.plan h2 { margin: 0; font: 700 20px var(--display); letter-spacing: -.02em; }
-.plan .when { font-weight: 700; } .plan .where { color: var(--muted); font-size: 13px; font-weight: 600; }
-.plan.flip { animation: flip .7s cubic-bezier(.3, .9, .3, 1); }
-@keyframes flip { 0% { transform: rotateX(0) } 50% { transform: rotateX(90deg) } 100% { transform: rotateX(0) } }
-.roster { display: grid; gap: 8px; }
-.who { display: flex; align-items: center; gap: 12px; font-weight: 700; font-size: 14px; }
-.who .st { margin-left: auto; font-size: 12px; color: var(--muted); display: inline-flex; gap: 6px; align-items: center; }
-.who .st.ok { color: var(--mint); animation: pop .4s both; }
-.tick { width: 20px; height: 20px; border-radius: 50%; background: var(--mint); color: var(--ink); display: grid; place-items: center; font-size: 12px; font-weight: 900; }
-.deadline { font-size: 12px; color: var(--muted); font-variant-numeric: tabular-nums; }
-.won { text-align: center; display: grid; gap: 6px; animation: rise .6s both; }
-.won h1 { font-size: 34px; }
-canvas.confetti { position: absolute; inset: 0; z-index: 30; pointer-events: none; }
+.tabs { position: absolute; left: 0; right: 0; bottom: 0; z-index: 12; display: grid; grid-template-columns: repeat(3, 1fr); padding: 8px 18px 26px; background: linear-gradient(transparent, var(--ink) 30%); }
+.tabs button { all: unset; cursor: pointer; display: grid; justify-items: center; gap: 3px; font-size: 11px; font-weight: 800; color: var(--muted); padding: 6px; border-radius: 12px; position: relative; }
+.tabs button.on { color: var(--text); } .tabs svg { width: 22px; height: 22px; }
+.tabs .badge { position: absolute; top: 2px; left: calc(50% + 6px); min-width: 16px; height: 16px; border-radius: 8px; background: var(--coral); color: var(--ink); font-size: 10px; display: grid; place-items: center; padding: 0 4px; animation: pop .4s both; }
 
-/* group thread */
-.pinned { display: grid; grid-template-columns: 56px 1fr auto; gap: 12px; align-items: center; background: var(--card); border: 1px solid var(--line); border-radius: 20px; padding: 10px; }
-.pinned .art { width: 56px; height: 56px; border-radius: 14px; font-size: 28px; overflow: hidden; }
-.pinned b { font: 700 14px var(--display); display: block; } .pinned span { font-size: 12px; color: var(--muted); font-weight: 600; }
-.pinned .ver { font: 700 10px var(--display); background: var(--card-2); padding: 5px 8px; border-radius: 999px; }
-.pinned.flip { animation: flip .7s cubic-bezier(.3, .9, .3, 1); }
-.thread { flex: 1; display: flex; flex-direction: column; justify-content: flex-end; gap: 8px; overflow: hidden; }
-.bub { max-width: 78%; padding: 10px 14px; border-radius: 20px; font-size: 14px; line-height: 1.35; animation: rise .4s both; }
-.bub small { display: block; font-size: 11px; color: var(--muted); font-weight: 700; margin-bottom: 2px; }
-.bub.them { background: var(--card-2); align-self: flex-start; border-bottom-left-radius: 6px; }
-.bub.me { background: var(--coral); color: var(--ink); align-self: flex-end; border-bottom-right-radius: 6px; font-weight: 600; }
-.sys { align-self: center; text-align: center; font-size: 12px; color: var(--muted); max-width: 86%; line-height: 1.4; animation: rise .4s both; }
-.change { align-self: stretch; background: linear-gradient(var(--card), var(--card)) padding-box, linear-gradient(120deg, var(--sun), var(--coral)) border-box; border: 1.5px solid transparent; border-radius: 20px; padding: 14px; display: grid; gap: 10px; animation: rise .5s both; }
-.change b { font: 700 14px var(--display); } .change p { margin: 0; font-size: 13px; color: var(--muted); line-height: 1.4; }
-.change .row { display: flex; gap: 8px; } .change .row button { flex: 1; }
-.mini { all: unset; cursor: pointer; text-align: center; padding: 11px; border-radius: 14px; font-weight: 800; font-size: 13px; background: var(--card-2); }
-.mini.go { background: var(--coral); color: var(--ink); }
-.mini:focus-visible { outline: 2px solid var(--sun); }
-.actions { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.week { flex: 1; overflow-y: auto; padding: 8px 22px 110px; display: grid; gap: 14px; align-content: start; scrollbar-width: none; }
+.day { display: grid; gap: 8px; } .day .d { font: 700 13px var(--display); color: var(--muted); }
+.empty { text-align: center; color: var(--muted); padding: 40px 10px; display: grid; gap: 14px; font-weight: 600; line-height: 1.5; }
+.streak { display: flex; gap: 12px; align-items: center; background: linear-gradient(120deg, #ff7a5926, #ffc85714); border: 1px solid #ff7a5940; border-radius: 20px; padding: 14px; }
+.streak b { font: 700 26px var(--display); color: var(--sun); } .streak div { font-size: 13px; font-weight: 600; line-height: 1.4; }
 
-/* repeat */
-.big-emoji { font-size: 84px; text-align: center; animation: pop .7s both; }
-.choice { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
-.note { background: var(--card); border-radius: 20px; padding: 16px; font-size: 14px; line-height: 1.5; display: grid; gap: 10px; animation: rise .5s both; }
-.input { all: unset; display: block; width: 100%; box-sizing: border-box; font: 600 18px/1.4 var(--body); color: var(--text); min-height: 52px; caret-color: var(--coral); white-space: pre-wrap; }
-.input::placeholder { color: #ffffff40; }
-.link { all: unset; cursor: pointer; justify-self: start; font-size: 12px; font-weight: 700; color: var(--coral); }
-.link:focus-visible, .tap:focus-visible { outline: 2px solid var(--coral); outline-offset: 2px; }
-.tap { all: unset; cursor: pointer; box-sizing: border-box; transition: transform .15s, background .2s; }
-.tap:hover { background: var(--card-2); } .tap:active { transform: scale(.98); }
-.reply.tap { display: flex; } .who.tap { display: flex; padding: 6px 8px; border-radius: 14px; }
-.actions { grid-template-columns: 1fr 1fr; }
+.imsg { flex: 1; display: flex; flex-direction: column; background: #000; min-height: 0; }
+.imsg-head { display: grid; justify-items: center; gap: 4px; padding: 6px 0 10px; border-bottom: 1px solid #ffffff14; }
+.imsg-head .av { width: 44px; height: 44px; font-size: 18px; background: linear-gradient(150deg, var(--sun), var(--coral)); border: none; }
+.imsg-head span { font-size: 12px; font-weight: 600; }
+.thread { flex: 1; overflow-y: auto; padding: 12px 14px 170px; display: flex; flex-direction: column; gap: 6px; scrollbar-width: none; }
+.b { max-width: 78%; padding: 9px 13px; border-radius: 19px; font-size: 14.5px; line-height: 1.38; white-space: pre-wrap; animation: rise .35s both; font-family: -apple-system, "SF Pro Text", var(--body); }
+.b.them { background: #26262a; align-self: flex-start; border-bottom-left-radius: 6px; }
+.b.me { background: #2f7cf6; align-self: flex-end; border-bottom-right-radius: 6px; }
+.ts { align-self: center; font-size: 11px; color: #8e8e93; font-weight: 600; margin: 8px 0 2px; }
+.compose { position: absolute; left: 0; right: 0; bottom: 74px; z-index: 13; display: flex; gap: 8px; padding: 8px 14px; background: #000; margin: 0; }
+.compose input { flex: 1; background: #1c1c1e; border: 1px solid #ffffff1f; border-radius: 18px; padding: 9px 14px; color: var(--text); font: 500 14px var(--body); outline: none; }
+.compose input:focus { border-color: #2f7cf6; }
+.compose button { all: unset; cursor: pointer; width: 34px; height: 34px; border-radius: 50%; background: #2f7cf6; display: grid; place-items: center; font-weight: 900; }
+.quick { position: absolute; left: 0; right: 0; bottom: 126px; z-index: 13; display: flex; gap: 6px; padding: 0 14px; overflow-x: auto; scrollbar-width: none; }
+.quick button { all: unset; cursor: pointer; flex: none; padding: 6px 11px; border-radius: 999px; border: 1px solid #2f7cf6; color: #6aa6ff; font-size: 12.5px; font-weight: 700; background: #000; }
+
+.toast { position: absolute; left: 50%; top: 64px; translate: -50% 0; z-index: 50; background: var(--text); color: var(--ink); padding: 10px 16px; border-radius: 999px; font-weight: 800; font-size: 13px; animation: pop .35s both; white-space: nowrap; }
+canvas.confetti { position: absolute; inset: 0; z-index: 45; pointer-events: none; }
+.c-cafe { background: linear-gradient(150deg, #f3c58a, #c9773e); } .c-sports { background: linear-gradient(150deg, #ffc857, #ff7a59); }
+.c-swim { background: linear-gradient(150deg, #7fd8f0, #3a86ff); } .c-outdoors { background: linear-gradient(150deg, #9be38b, #2f9e6e); }
+.c-music { background: linear-gradient(150deg, #c9a6ff, #7b5cff); } .c-food { background: linear-gradient(150deg, #ffb4a2, #e5546f); }
+.c-art { background: linear-gradient(150deg, #f6a6c1, #b05f9c); } .c-wellness { background: linear-gradient(150deg, #b8f0e0, #43b49b); }
+.c-community { background: linear-gradient(150deg, #ffe08a, #e9a23b); }
 @media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation-duration: .01s !important; transition-duration: .01s !important; } }
 </style>
 
 <div class="stage">
   <aside class="rail">
-    <div>
-      <div class="brand">hud<span>dle</span></div>
-      <div class="tag">turns "we should hang out" into a plan that actually happens.</div>
-    </div>
+    <div><div class="brand">hud<span>dle</span></div>
+      <div class="tag">every week, a few things happening near you. tap to show up, keep showing up, find your people.</div></div>
     <ol class="steps" id="steps"></ol>
-    <div class="fine">Live demo running our real matching and confirmation engine. Venues, travel times and friends are sample data.</div>
+    <div class="fine">Live demo running our real ranking engine. Events, hosts and attendee counts are sample data for the week of Oct 18, 2026.</div>
   </aside>
-  <div class="phone-wrap" id="wrap">
-    <div class="phone" id="phone">
-      <div class="blob a"></div><div class="blob b"></div>
-      <div class="island"></div>
-      <div class="statusbar"><span>9:41</span><i>
-        <svg width="18" height="12" viewBox="0 0 18 12" fill="currentColor"><rect x="0" y="8" width="3" height="4" rx="1"/><rect x="5" y="5" width="3" height="7" rx="1"/><rect x="10" y="2.5" width="3" height="9.5" rx="1"/><rect x="15" y="0" width="3" height="12" rx="1"/></svg>
-        <svg width="26" height="12" viewBox="0 0 26 12"><rect x=".5" y=".5" width="22" height="11" rx="3.5" fill="none" stroke="currentColor" opacity=".5"/><rect x="2" y="2" width="17" height="8" rx="2" fill="currentColor"/><rect x="24" y="4" width="1.5" height="4" rx=".75" fill="currentColor" opacity=".5"/></svg>
-      </i></div>
-      <div id="screen" class="screen"></div>
-      <div class="homebar"></div>
-    </div>
-  </div>
+  <div class="phone-wrap" id="wrap"><div class="phone" id="phone">
+    <div class="island"></div>
+    <div class="statusbar"><span>9:41</span><span>
+      <svg width="18" height="12" viewBox="0 0 18 12" fill="currentColor"><rect x="0" y="8" width="3" height="4" rx="1"/><rect x="5" y="5" width="3" height="7" rx="1"/><rect x="10" y="2.5" width="3" height="9.5" rx="1"/><rect x="15" y="0" width="3" height="12" rx="1"/></svg>
+      <svg width="26" height="12" viewBox="0 0 26 12"><rect x=".5" y=".5" width="22" height="11" rx="3.5" fill="none" stroke="currentColor" opacity=".5"/><rect x="2" y="2" width="17" height="8" rx="2" fill="currentColor"/></svg></span></div>
+    <div id="screen" class="screen"></div>
+    <div class="homebar"></div>
+  </div></div>
 </div>
 
-<script>"use strict";var Core=(()=>{var A=Object.defineProperty;var G=Object.getOwnPropertyDescriptor;var H=Object.getOwnPropertyNames;var K=Object.prototype.hasOwnProperty;var W=(n,e,t)=>e in n?A(n,e,{enumerable:!0,configurable:!0,writable:!0,value:t}):n[e]=t;var F=(n,e)=>{for(var t in e)A(n,t,{get:e[t],enumerable:!0})},Y=(n,e,t,i)=>{if(e&&typeof e=="object"||typeof e=="function")for(let s of H(e))!K.call(n,s)&&s!==t&&A(n,s,{get:()=>e[s],enumerable:!(i=G(e,s))||i.enumerable});return n};var Q=n=>Y(A({},"__esModule",{value:!0}),n);var m=(n,e,t)=>W(n,typeof e!="symbol"?e+"":e,t);var de={};F(de,{OutingLifecycle:()=>R,formatLocal:()=>w,fx:()=>N,generateProposals:()=>D,toPublicPlan:()=>$});var f=n=>Date.parse(n),M=n=>new Date(n).toISOString();function X(n,e,t,i,s,r){if(!n||!n.optedInAt||n.stoppedAt)return{status:"fail",reason:"no_consent"};if(!e||e.revokedAt||f(e.expiresAt)<=r)return{status:"fail",reason:"no_valid_grant"};if(!t||t.willing===void 0)return{status:"unknown",reason:"no_reply"};if(t.willing!=="yes")return{status:"fail",reason:"not_willing"};if(t.activityVotes[i.id]==="no")return{status:"fail",reason:"passed_activity"};if(t.maxBudget!==void 0&&i.costPerPerson>t.maxBudget)return{status:"fail",reason:"budget"};for(let b of t.requiredNeeds)if(!i.supportedNeeds.includes(b))return{status:"fail",reason:"need_unmet"};let u=t.minNoticeMinutes??0;if(s-r<u*6e4)return{status:"fail",reason:"notice"};let o=t.travel[i.venueId];if(!o)return{status:"unknown",reason:"travel_unknown"};if(t.maxTravelMinutes!==void 0&&o.minutes>t.maxTravelMinutes)return{status:"fail",reason:"travel_limit"};let c=s+i.durationMinutes*6e4,l=s-o.minutes*6e4,y=c+(t.needsReturnTravel?o.minutes*6e4:0);return l<f(e.start)||y>f(e.end)?{status:"fail",reason:"window"}:{status:"ok",travelMinutes:o.minutes,departure:l}}function ee(n,e,t){if(n.existingEvent)return[f(n.existingEvent.start)];let i=[],s=Math.max(f(e.windowStart),n.openFrom?f(n.openFrom):-1/0),r=Math.min(f(e.windowEnd),n.openUntil?f(n.openUntil):1/0);for(let u=s;u+n.durationMinutes*6e4<=r;u+=t*6e4)i.push(u);return i}function te(n,e){let t=e+n.durationMinutes*6e4;return!(n.openFrom&&e<f(n.openFrom)||n.openUntil&&t>f(n.openUntil))}function D(n){let{outing:e,users:t,grants:i,responses:s,activities:r}=n,u=f(n.now),o=n.stepMinutes??30,c=a=>i.find(p=>p.userId===a&&p.outingId===e.id),l=a=>s.find(p=>p.userId===a&&p.outingId===e.id),y=[],b=0;for(let a of r)for(let p of ee(a,e,o)){if(!te(a,p))continue;let I=new Map;for(let d of e.rosterIds)I.set(d,X(t.get(d),c(d),l(d),a,p,u));let O=I.get(e.organizerId);if(O.status!=="ok"){O.status==="unknown"&&b++;continue}let k;if(e.policy==="everyone"){let d=[...I.values()].map(v=>v.status);if(d.includes("fail"))continue;if(d.includes("unknown")){b++;continue}if(k=[...e.rosterIds],k.length<a.minAttendees||k.length>a.maxAttendees)continue}else{let d=e.rosterIds.filter(v=>v!==e.organizerId&&I.get(v).status==="ok").sort((v,z)=>{let L=l(v)?.activityVotes[a.id]==="yes"?0:1,B=l(z)?.activityVotes[a.id]==="yes"?0:1;return L-B||v.localeCompare(z)});if(k=[e.organizerId,...d].slice(0,a.maxAttendees),k.length<a.minAttendees){e.rosterIds.some(v=>I.get(v).status==="unknown")&&b++;continue}}let C=k.map(d=>I.get(d)),q=C.map(d=>d.travelMinutes),E=k.filter(d=>l(d)?.activityVotes[a.id]==="yes").length,T=[];a.isFixture&&T.push("Sample venue and travel data (demo fixture)"),a.bookingStatus==="unverified"&&T.push("Venue availability not yet verified"),y.push({id:`${a.id}@${M(p)}`,activity:a,start:M(p),end:M(p+a.durationMinutes*6e4),attendeeIds:k,yesVotes:E,worstTravelMinutes:Math.max(...q),totalTravelMinutes:q.reduce((d,v)=>d+v,0),earliestDeparture:M(Math.min(...C.map(d=>d.departure))),uncertainties:T,publicReason:`${a.fitBlurb} Fits the group's shared window, budgets, and travel limits.`})}let Z=y.sort((a,p)=>ne(a,p,e.policy)),V=new Set,_=[];for(let a of Z)if(!V.has(a.activity.id)&&(V.add(a.activity.id),_.push(a),_.length===3))break;return{options:_,unresolvedCount:b,noMatch:_.length===0}}function ne(n,e,t){return(t==="flexible"?e.attendeeIds.length-n.attendeeIds.length:0)||e.yesVotes-n.yesVotes||n.worstTravelMinutes-e.worstTravelMinutes||n.totalTravelMinutes-e.totalTravelMinutes||n.activity.costPerPerson-e.activity.costPerPerson||n.id.localeCompare(e.id)}function $(n,e,t){return{version:n.version,activity:n.activity.name,venue:n.activity.venueName,area:n.activity.area,start:n.start,end:n.end,timezone:t,costPerPerson:n.activity.costPerPerson,bookingStatus:n.activity.bookingStatus,attendees:n.attendeeIds.map(i=>e.get(i)?.displayName??"Someone"),isSampleData:n.activity.isFixture,reason:n.publicReason}}function w(n,e){return new Intl.DateTimeFormat("en-US",{timeZone:e,weekday:"short",month:"short",day:"numeric",hour:"numeric",minute:"2-digit"}).format(new Date(n))}function J(n){let e=n.isSampleData?" (sample data)":"";return[`Plan v${n.version}: ${n.activity} at ${n.venue}, ${n.area}${e}`,`${w(n.start,n.timezone)} \u2013 ${w(n.end,n.timezone)}`,`~$${n.costPerPerson}/person \xB7 ${n.attendees.join(", ")}`,n.reason].join(`
-`)}var S=6e4,h=n=>Date.parse(n),x=n=>new Date(n).toISOString(),R=class{constructor(e,t,i=30){this.outing=e;this.users=t;this.responseMinutes=i;m(this,"state","draft");m(this,"versions",[]);m(this,"currentVersion");m(this,"pendingVersion");m(this,"currentInfeasible",!1);m(this,"acceptances",new Map);m(this,"repeatInterest",new Map);m(this,"outbox",[]);m(this,"processed",new Map)}v(e){return this.versions.find(t=>t.version===e)}get current(){return this.v(this.currentVersion)}get pending(){return this.v(this.pendingVersion)}consented(e){let t=this.users.get(e);return!!t?.optedInAt&&!t.stoppedAt}name(e){return this.users.get(e)?.displayName??"Someone"}ok(e){return{ok:!0,state:this.state,message:e}}err(e){return{ok:!1,state:this.state,error:e}}enqueue(e){this.outbox.some(t=>t.key===e.key)||this.outbox.push({...e,status:"pending"})}cancelJobs(e){for(let t of this.outbox)t.status==="pending"&&e(t)&&(t.status="cancelled")}planText(e){return J($({version:e.version,...e.plan},this.users,this.outing.timezone))}scheduleReminder(e,t){let i=h(e.plan.start)-60*S;i<=t||this.enqueue({key:`reminder:${this.outing.id}:v${e.version}`,kind:"reminder",to:e.plan.attendeeIds,text:`Reminder: starts in 1 hour.
-${this.planText(e)}`,dueAt:x(i),version:e.version})}once(e,t){let i=this.processed.get(e);if(i)return i;let s=t();return this.processed.set(e,s),s}openCollecting(){return this.state!=="draft"?this.err("invalid_transition"):(this.state="collecting",this.ok())}propose(e,t,i,s){return this.once(e,()=>{if(t!==this.outing.organizerId)return this.err("unauthorized");if(this.state!=="collecting")return this.err("invalid_transition");let r=h(s),u=Math.min(r+this.responseMinutes*S,h(i.earliestDeparture));if(u<=r)return this.err("deadline_passed");let o={version:this.versions.length+1,kind:"initial",createdAt:s,deadline:x(u),plan:{activity:i.activity,start:i.start,end:i.end,attendeeIds:i.attendeeIds,publicReason:i.publicReason,earliestDeparture:i.earliestDeparture}};this.versions.push(o),this.pendingVersion=o.version,this.state="awaiting_confirmation";for(let c of o.plan.attendeeIds)this.enqueue({key:`confirm:${this.outing.id}:v${o.version}:${c}`,kind:"private",to:[c],dueAt:s,version:o.version,text:`${this.planText(o)}
-Reply "CONFIRM ${o.version}" to join and share your contact with the group, or "PASS".`});return this.ok()})}accept(e,t,i,s,r){return this.once(e,()=>{let u=this.pending;if(!u||i!==u.version)return this.err("stale_version");if(!["awaiting_confirmation","change_pending"].includes(this.state))return this.err("invalid_transition");if(!u.plan.attendeeIds.includes(t))return this.err("not_invited");if(!this.consented(t))return this.err("no_consent");if(h(r)>h(u.deadline))return this.err("deadline_passed");if(!s)return this.err("identity_consent_required");let o=`${i}:${t}`;if(this.acceptances.has(o))return this.ok("already_recorded");this.acceptances.set(o,{answer:"accept",at:r,shareIdentity:s});let c=u.plan.attendeeIds.every(l=>this.acceptances.get(`${i}:${l}`)?.answer==="accept");return c&&this.applyVersion(u,h(r)),this.ok(c?"confirmed":"waiting_on_others")})}decline(e,t,i,s){return this.once(e,()=>{let r=this.pending;return!r||i!==r.version?this.err("stale_version"):r.plan.attendeeIds.includes(t)?(this.acceptances.set(`${i}:${t}`,{answer:"decline",at:s,shareIdentity:!1}),this.dropPending(),this.enqueue({key:`declined:${this.outing.id}:v${i}`,kind:"private",to:[this.outing.organizerId],dueAt:s,text:`Plan v${i} didn't get everyone's yes. Want to try another option or time?`}),this.ok()):this.err("not_invited")})}tick(e){let t=this.pending;t&&h(e)>h(t.deadline)&&this.dropPending()}dropPending(){let e=this.pending;e&&(this.cancelJobs(t=>t.version===e.version&&t.kind==="private"),this.pendingVersion=void 0,e.kind==="initial"?this.state="collecting":this.state=this.currentInfeasible?"change_pending":"confirmed")}applyVersion(e,t){let i=this.current;this.currentVersion=e.version,this.pendingVersion=void 0,this.currentInfeasible=!1,this.state="confirmed",this.cancelJobs(s=>s.kind==="reminder"),i?(i.plan.attendeeIds.join()===e.plan.attendeeIds.join()||this.enqueue({key:`roster:${this.outing.id}:v${e.version}`,kind:"update_group_roster",to:e.plan.attendeeIds,dueAt:x(t),text:"",version:e.version}),this.enqueue({key:`update:${this.outing.id}:v${e.version}`,kind:"group",to:e.plan.attendeeIds,dueAt:x(t),text:`Updated plan:
-${this.planText(e)}`,version:e.version})):this.enqueue({key:`group:${this.outing.id}`,kind:"create_group",to:e.plan.attendeeIds,dueAt:x(t),text:`You're confirmed!
-${this.planText(e)}`,version:e.version}),this.scheduleReminder(e,t)}requestChange(e,t,i,s,r){return this.once(e,()=>{let u=this.current;if(!u||!["confirmed","change_pending"].includes(this.state))return this.err("invalid_transition");if(!u.plan.attendeeIds.includes(t))return this.err("unauthorized");if(this.pending)return this.err("change_already_pending");let o={...u.plan,...i},c=h(r),l={version:this.versions.length+1,kind:"change",createdAt:r,plan:o,deadline:x(Math.min(c+this.responseMinutes*S,h(o.start)))};this.versions.push(l),this.pendingVersion=l.version,this.state="change_pending",s||(this.currentInfeasible=!0,this.cancelJobs(y=>y.kind==="reminder"));for(let y of o.attendeeIds)this.enqueue({key:`confirm:${this.outing.id}:v${l.version}:${y}`,kind:"private",to:[y],dueAt:r,version:l.version,text:`Proposed change:
-${this.planText(l)}
-Reply "CONFIRM ${l.version}" to accept or "KEEP" to keep the current plan.`});return this.ok()})}withdraw(e,t,i){return this.once(e,()=>{let s=this.current;if(!s||!s.plan.attendeeIds.includes(t))return this.err("not_attending");let r=s.plan.attendeeIds.filter(c=>c!==t);this.pending&&this.dropPending(),this.cancelJobs(c=>c.kind==="reminder");let u=r.length<s.plan.activity.minAttendees;if(this.outing.policy==="everyone"||u)return this.currentInfeasible=!0,this.state="change_pending",this.enqueue({key:`replan:${this.outing.id}:v${s.version}`,kind:"private",to:[this.outing.organizerId],dueAt:i,text:"The current plan no longer works for the group. Replan or cancel?"}),this.ok("needs_replan");let o={...s,version:this.versions.length+1,kind:"change",createdAt:i,deadline:i,plan:{...s.plan,attendeeIds:r}};return this.versions.push(o),this.applyVersion(o,h(i)),this.ok()})}recordLateness(e,t,i,s){return this.once(e,()=>{let r=this.current;if(this.state!=="confirmed"||!r?.plan.attendeeIds.includes(t))return this.err("not_attending");let u=r.plan.attendeeIds.filter(o=>o!==t);return this.enqueue({key:`late:${e}`,kind:"group",to:u,dueAt:s,text:`Heads-up: ${this.name(t)} is running about ${i} min late.`}),this.ok()})}complete(e){let t=this.current;if(this.state!=="confirmed"||!t)return this.err("invalid_transition");this.state="completed",this.cancelJobs(i=>i.kind==="reminder");for(let i of t.plan.attendeeIds)this.enqueue({key:`repeat:${this.outing.id}:${i}`,kind:"repeat_prompt",to:[i],dueAt:e,text:"Run it back next week? Reply YES or PASS (only you see this)."});return this.ok()}cancel(e){return e!==this.outing.organizerId?this.err("unauthorized"):["completed","cancelled","expired"].includes(this.state)?this.err("invalid_transition"):(this.state="cancelled",this.pendingVersion=void 0,this.cancelJobs(()=>!0),this.ok())}recordRepeat(e,t){return this.state!=="completed"||!this.current?.plan.attendeeIds.includes(e)?this.err("invalid_transition"):(this.repeatInterest.set(e,t),this.ok())}nextRoundRoster(){return[...this.repeatInterest].filter(([,e])=>e).map(([e])=>e)}stop(e,t){let i=this.users.get(e);i&&(i.stoppedAt=t);for(let s of this.outbox)s.status==="pending"&&s.to.includes(e)&&s.to.length===1&&(s.status="suppressed");this.current?.plan.attendeeIds.includes(e)&&this.state==="confirmed"?this.withdraw(`stop:${e}:${t}`,e,t):this.pending?.plan.attendeeIds.includes(e)&&this.dropPending()}dueJobs(e){let t=h(e),i=[];for(let s of this.outbox)if(!(s.status!=="pending"||h(s.dueAt)>t)){if(s.to=s.to.filter(r=>this.consented(r)),s.to.length===0){s.status="suppressed";continue}i.push(s)}return i}};var N={};F(N,{NOW:()=>ie,TZ:()=>P,activities:()=>re,grants:()=>ae,outing:()=>oe,responses:()=>ue,users:()=>j});var P="America/Los_Angeles",ie="2026-10-18T17:00:00.000Z",U="2026-10-17T22:00:00.000Z",se="2026-10-18T16:00:00.000Z",j=[{id:"sarah",displayName:"Sarah",timezone:P,optedInAt:U},{id:"amir",displayName:"Amir",timezone:P,optedInAt:U},{id:"jenna",displayName:"Jenna",timezone:P,optedInAt:U},{id:"kai",displayName:"Kai",timezone:P,optedInAt:U}],re=[{id:"pickleball",kind:"sport",name:"Pickleball doubles",venueId:"v_courts",venueName:"Sample Park Courts",area:"Green Lake",durationMinutes:90,costPerPerson:0,minAttendees:4,maxAttendees:4,supportedNeeds:[],openFrom:"2026-10-18T15:00:00.000Z",openUntil:"2026-10-19T02:00:00.000Z",bookingStatus:"unverified",isFixture:!0,fitBlurb:"Active, free, and needs exactly four."},{id:"walk",kind:"outdoors",name:"Lake loop walk",venueId:"v_lake",venueName:"Sample Lake Trailhead",area:"Green Lake",durationMinutes:60,costPerPerson:0,minAttendees:2,maxAttendees:8,supportedNeeds:["wheelchair_access"],bookingStatus:"not_required",isFixture:!0,fitBlurb:"Easy, free, and flexible on headcount."},{id:"pho",kind:"meal",name:"Pho lunch",venueId:"v_pho",venueName:"Sample Pho House",area:"U District",durationMinutes:75,costPerPerson:14,minAttendees:2,maxAttendees:6,supportedNeeds:["vegetarian","wheelchair_access"],openFrom:"2026-10-18T18:00:00.000Z",openUntil:"2026-10-19T04:00:00.000Z",bookingStatus:"not_required",isFixture:!0,fitBlurb:"Sit-down meal near campus."}],oe={id:"o1",organizerId:"sarah",rosterIds:["sarah","amir","jenna","kai"],policy:"flexible",windowStart:"2026-10-18T21:00:00.000Z",windowEnd:"2026-10-19T01:00:00.000Z",timezone:P},ae=j.map(n=>({userId:n.id,outingId:"o1",start:"2026-10-18T21:00:00.000Z",end:"2026-10-19T01:00:00.000Z",expiresAt:"2026-10-19T01:00:00.000Z"})),g=n=>({minutes:n,basis:"fixture estimate",estimatedAt:se}),ue=[{userId:"sarah",outingId:"o1",willing:"yes",activityVotes:{pickleball:"yes",walk:"yes",pho:"maybe"},requiredNeeds:[],needsReturnTravel:!1,maxTravelMinutes:30,travel:{v_courts:g(15),v_lake:g(15),v_pho:g(20)}},{userId:"amir",outingId:"o1",willing:"yes",activityVotes:{pickleball:"yes",walk:"maybe",pho:"yes"},requiredNeeds:[],needsReturnTravel:!0,travel:{v_courts:g(20),v_lake:g(20),v_pho:g(10)}},{userId:"jenna",outingId:"o1",willing:"yes",activityVotes:{pickleball:"yes",walk:"yes",pho:"yes"},requiredNeeds:[],needsReturnTravel:!1,travel:{v_courts:g(25),v_lake:g(25),v_pho:g(15)}},{userId:"kai",outingId:"o1",willing:"yes",activityVotes:{pickleball:"yes",walk:"yes",pho:"yes"},requiredNeeds:[],needsReturnTravel:!1,maxBudget:10,note:"tight on money this week",travel:{v_courts:g(10),v_lake:g(10),v_pho:g(10)}}];return Q(de);})();
+<script>"use strict";var Core=(()=>{var m=Object.defineProperty;var v=Object.getOwnPropertyDescriptor;var T=Object.getOwnPropertyNames;var S=Object.prototype.hasOwnProperty;var C=(r,e)=>{for(var o in e)m(r,o,{get:e[o],enumerable:!0})},P=(r,e,o,i)=>{if(e&&typeof e=="object"||typeof e=="function")for(let a of T(e))!S.call(r,a)&&a!==o&&m(r,a,{get:()=>e[a],enumerable:!(i=v(e,a))||i.enumerable});return r};var F=r=>P(m({},"__esModule",{value:!0}),r);var x={};C(x,{AREAS:()=>h,EVENTS:()=>f,distanceKm:()=>y,rankEvents:()=>k,slotOf:()=>p});var n=r=>({...r,isSample:!0}),f=[n({id:"e01",title:"Pop-up pour-over bar",category:"cafe",emoji:"\u2615",host:"Drift Coffee pop-up",neighborhood:"Capitol Hill",place:"Cal Anderson Park",lat:47.617,lng:-122.3191,start:"2026-10-18T09:00:00-07:00",end:"2026-10-18T12:00:00-07:00",cost:5,capacity:40,going:23,beginnerFriendly:!0,recurring:"every Sunday",blurb:"Rotating single-origin pours from a cart, plus a shared table for strangers to sit together."}),n({id:"e02",title:"Open-play pickleball",category:"sports",emoji:"\u{1F3D3}",host:"Green Lake Paddlers",neighborhood:"Green Lake",place:"Green Lake Park courts",lat:47.6805,lng:-122.329,start:"2026-10-18T14:00:00-07:00",end:"2026-10-18T16:00:00-07:00",cost:0,capacity:16,going:11,beginnerFriendly:!0,recurring:"every Sunday",blurb:"Rotate partners every game. Loaner paddles at the bench, no experience needed."}),n({id:"e03",title:"Discovery Park sunset hike",category:"outdoors",emoji:"\u{1F97E}",host:"Trailheads Seattle",neighborhood:"Magnolia",place:"Discovery Park lighthouse loop",lat:47.6573,lng:-122.4059,start:"2026-10-18T16:30:00-07:00",end:"2026-10-18T18:30:00-07:00",cost:0,capacity:25,going:14,beginnerFriendly:!0,blurb:"Easy 3-mile loop down to the beach for sunset. Group walks at a chatty pace."}),n({id:"e04",title:"Cold plunge + sauna social",category:"wellness",emoji:"\u{1F9D6}",host:"Salt & Steam collective",neighborhood:"Ballard",place:"Golden Gardens Park",lat:47.692,lng:-122.4034,start:"2026-10-19T07:00:00-07:00",end:"2026-10-19T08:30:00-07:00",cost:12,capacity:12,going:9,beginnerFriendly:!1,recurring:"every Monday",blurb:"Mobile sauna on the beach, a quick dip in the Sound, then coffee by the fire."}),n({id:"e05",title:"Beginner lap swim meetup",category:"swim",emoji:"\u{1F3CA}",host:"Lap Lane Club",neighborhood:"Queen Anne",place:"Queen Anne Pool",lat:47.6378,lng:-122.3604,start:"2026-10-19T18:30:00-07:00",end:"2026-10-19T19:30:00-07:00",cost:6,capacity:20,going:8,beginnerFriendly:!0,recurring:"every Monday",blurb:"Coach-led drills for newer swimmers, split into lanes by pace. Pool entry fee only."}),n({id:"e06",title:"Run club + bagels",category:"sports",emoji:"\u{1F3C3}",host:"Fremont Run Crew",neighborhood:"Fremont",place:"Fremont Troll",lat:47.651,lng:-122.3473,start:"2026-10-20T18:00:00-07:00",end:"2026-10-20T19:15:00-07:00",cost:0,capacity:60,going:37,beginnerFriendly:!0,recurring:"every Tuesday",blurb:"3 or 5 miles along the Burke-Gilman, no one gets dropped. Bagels after."}),n({id:"e07",title:"Board game night",category:"community",emoji:"\u{1F3B2}",host:"U District Tabletop",neighborhood:"U District",place:"University Heights Center",lat:47.6625,lng:-122.314,start:"2026-10-20T19:00:00-07:00",end:"2026-10-20T22:00:00-07:00",cost:3,capacity:50,going:26,beginnerFriendly:!0,recurring:"every Tuesday",blurb:"Hundreds of games and volunteers who teach. Come solo, you'll get seated with a table."}),n({id:"e08",title:"Open mic & acoustic jam",category:"music",emoji:"\u{1F3B8}",host:"Wallingford Sessions",neighborhood:"Wallingford",place:"Meridian Park",lat:47.66,lng:-122.3335,start:"2026-10-21T19:00:00-07:00",end:"2026-10-21T21:00:00-07:00",cost:0,capacity:40,going:15,beginnerFriendly:!0,blurb:"Sign up for a two-song slot or just sit in the circle and listen."}),n({id:"e09",title:"Pop-up dumpling workshop",category:"food",emoji:"\u{1F95F}",host:"Fold & Pleat kitchen",neighborhood:"Chinatown-ID",place:"Hing Hay Park",lat:47.5985,lng:-122.3248,start:"2026-10-21T18:00:00-07:00",end:"2026-10-21T20:00:00-07:00",cost:15,capacity:18,going:16,beginnerFriendly:!0,blurb:"Learn three folds, then eat everything you made. Veggie filling available."}),n({id:"e10",title:"Drop-in volleyball",category:"sports",emoji:"\u{1F3D0}",host:"Alki Sand Crew",neighborhood:"West Seattle",place:"Alki Beach courts",lat:47.579,lng:-122.41,start:"2026-10-22T17:30:00-07:00",end:"2026-10-22T19:30:00-07:00",cost:0,capacity:24,going:12,beginnerFriendly:!1,recurring:"every Thursday",blurb:"Pickup doubles and fours on the sand while there's light."}),n({id:"e11",title:"Sketch & sip",category:"art",emoji:"\u{1F3A8}",host:"Pencil Pushers",neighborhood:"Capitol Hill",place:"Volunteer Park conservatory lawn",lat:47.6301,lng:-122.315,start:"2026-10-22T18:00:00-07:00",end:"2026-10-22T20:00:00-07:00",cost:8,capacity:30,going:19,beginnerFriendly:!0,blurb:"Supplies and tea provided. A short prompt, then everyone shares (or doesn't)."}),n({id:"e12",title:"Lake Union paddle",category:"outdoors",emoji:"\u{1F6F6}",host:"Northwest Paddlers",neighborhood:"South Lake Union",place:"Lake Union Park",lat:47.627,lng:-122.337,start:"2026-10-23T17:00:00-07:00",end:"2026-10-23T19:00:00-07:00",cost:20,capacity:14,going:10,beginnerFriendly:!0,blurb:"Guided kayak loop past the houseboats. Boats and life jackets included."}),n({id:"e13",title:"Friday night food truck meet",category:"food",emoji:"\u{1F32E}",host:"Rolling Plates",neighborhood:"Ballard",place:"Ballard Commons Park",lat:47.6687,lng:-122.3842,start:"2026-10-23T17:30:00-07:00",end:"2026-10-23T20:30:00-07:00",cost:12,capacity:200,going:64,beginnerFriendly:!0,recurring:"every Friday",blurb:"Six trucks, long communal tables, and a playlist anyone can add to."}),n({id:"e14",title:"Climbing intro night",category:"sports",emoji:"\u{1F9D7}",host:"Send It Social",neighborhood:"Fremont",place:"Fremont climbing gym (sample)",lat:47.649,lng:-122.35,start:"2026-10-23T19:00:00-07:00",end:"2026-10-23T21:00:00-07:00",cost:18,capacity:20,going:13,beginnerFriendly:!0,blurb:"Gear and a belay lesson included. You'll be paired with a climbing buddy."}),n({id:"e15",title:"Saturday market volunteer shift",category:"community",emoji:"\u{1F33B}",host:"Neighbors Feeding Neighbors",neighborhood:"U District",place:"University Way farmers market",lat:47.6655,lng:-122.313,start:"2026-10-24T09:00:00-07:00",end:"2026-10-24T12:00:00-07:00",cost:0,capacity:15,going:7,beginnerFriendly:!0,recurring:"every Saturday",blurb:"Help collect and sort surplus produce for local food banks. Snacks on us."}),n({id:"e16",title:"Gas Works kite flying",category:"outdoors",emoji:"\u{1FA81}",host:"Wind & Wonder",neighborhood:"Wallingford",place:"Gas Works Park hill",lat:47.6456,lng:-122.3344,start:"2026-10-24T11:00:00-07:00",end:"2026-10-24T13:00:00-07:00",cost:0,capacity:80,going:31,beginnerFriendly:!0,blurb:"Bring a kite or borrow one. Best wind is on top of the hill."}),n({id:"e17",title:"Open-water swim (wetsuits)",category:"swim",emoji:"\u{1F30A}",host:"Sound Swimmers",neighborhood:"West Seattle",place:"Alki Beach",lat:47.581,lng:-122.407,start:"2026-10-24T08:00:00-07:00",end:"2026-10-24T09:30:00-07:00",cost:0,capacity:30,going:18,beginnerFriendly:!1,recurring:"every Saturday",blurb:"Buddy system, kayak spotter, hot drinks after. Wetsuit strongly recommended in October."}),n({id:"e18",title:"Matcha pop-up + journaling",category:"cafe",emoji:"\u{1F375}",host:"Slow Morning pop-up",neighborhood:"Fremont",place:"Fremont Sunday market lot",lat:47.6505,lng:-122.35,start:"2026-10-24T10:00:00-07:00",end:"2026-10-24T12:00:00-07:00",cost:7,capacity:25,going:12,beginnerFriendly:!0,blurb:"Whisked-to-order matcha and a shared table with journaling prompts."}),n({id:"e19",title:"Pickup basketball",category:"sports",emoji:"\u{1F3C0}",host:"Cal Anderson Hoops",neighborhood:"Capitol Hill",place:"Cal Anderson Park court",lat:47.6165,lng:-122.3185,start:"2026-10-24T14:00:00-07:00",end:"2026-10-24T16:00:00-07:00",cost:0,capacity:20,going:14,beginnerFriendly:!1,recurring:"every Saturday",blurb:"Run fives, winners stay. All skill levels show up, games stay friendly."}),n({id:"e20",title:"Bellevue lakeside yoga",category:"wellness",emoji:"\u{1F9D8}",host:"Flow Outside",neighborhood:"Bellevue",place:"Meydenbauer Bay Park",lat:47.6145,lng:-122.208,start:"2026-10-24T09:30:00-07:00",end:"2026-10-24T10:30:00-07:00",cost:10,capacity:30,going:17,beginnerFriendly:!0,recurring:"every Saturday",blurb:"Gentle all-levels flow on the lawn. Mats available to borrow."}),n({id:"e21",title:"Redmond trail bike ride",category:"outdoors",emoji:"\u{1F6B2}",host:"Eastside Spokes",neighborhood:"Redmond",place:"Marymoor Park",lat:47.662,lng:-122.121,start:"2026-10-18T10:00:00-07:00",end:"2026-10-18T12:00:00-07:00",cost:0,capacity:30,going:12,beginnerFriendly:!0,blurb:"Casual 15-mile out-and-back on the Sammamish River Trail. Coffee stop halfway."}),n({id:"e22",title:"Late-night ramen pop-up",category:"food",emoji:"\u{1F35C}",host:"Midnight Noodle",neighborhood:"Capitol Hill",place:"Pike/Pine pop-up space",lat:47.614,lng:-122.32,start:"2026-10-24T21:00:00-07:00",end:"2026-10-24T23:30:00-07:00",cost:14,capacity:30,going:27,beginnerFriendly:!0,blurb:"One bowl, one night. Counter seating means you'll end up talking to your neighbor."})],h={"capitol hill":{lat:47.6253,lng:-122.3222,label:"Capitol Hill"},"u district":{lat:47.6615,lng:-122.313,label:"U District"},udistrict:{lat:47.6615,lng:-122.313,label:"U District"},uw:{lat:47.6553,lng:-122.3035,label:"UW"},ballard:{lat:47.6687,lng:-122.384,label:"Ballard"},fremont:{lat:47.651,lng:-122.35,label:"Fremont"},wallingford:{lat:47.6615,lng:-122.334,label:"Wallingford"},"green lake":{lat:47.68,lng:-122.329,label:"Green Lake"},"queen anne":{lat:47.637,lng:-122.357,label:"Queen Anne"},downtown:{lat:47.6062,lng:-122.3321,label:"Downtown"},"south lake union":{lat:47.6256,lng:-122.3344,label:"South Lake Union"},slu:{lat:47.6256,lng:-122.3344,label:"South Lake Union"},"west seattle":{lat:47.57,lng:-122.386,label:"West Seattle"},bellevue:{lat:47.6101,lng:-122.2015,label:"Bellevue"},redmond:{lat:47.674,lng:-122.1215,label:"Redmond"},kirkland:{lat:47.6769,lng:-122.206,label:"Kirkland"}};var u=r=>r*Math.PI/180;function y(r,e){let i=u(e.lat-r.lat),a=u(e.lng-r.lng),d=Math.sin(i/2)**2+Math.cos(u(r.lat))*Math.cos(u(e.lat))*Math.sin(a/2)**2;return 2*6371*Math.asin(Math.sqrt(d))}function j(r,e="America/Los_Angeles"){let o=new Intl.DateTimeFormat("en-US",{timeZone:e,weekday:"short",hour:"numeric",hourCycle:"h23"}).formatToParts(new Date(r));return{wd:["Sun","Mon","Tue","Wed","Thu","Fri","Sat"].indexOf(o.find(a=>a.type==="weekday").value),hour:+o.find(a=>a.type==="hour").value}}function p(r){let{wd:e,hour:o}=j(r);return e===0||e===6?"weekends":o<10?"weekday_mornings":o>=17?"weekday_evenings":"weekday_daytime"}function k(r,e,o,i={}){let a=[];for(let t of r){if(Date.parse(t.start)<=o.getTime()||Date.parse(t.start)>o.getTime()+8*864e5||i.excludeIds?.has(t.id)||t.going>=t.capacity||e.maxBudget!==void 0&&t.cost>e.maxBudget||e.beginnerOnly&&!t.beginnerFriendly)continue;let l=p(t.start);if(e.when.length&&!e.when.includes(l))continue;let s=e.home?y(e.home,t):void 0;if(s!==void 0&&e.maxDistanceKm!==void 0&&s>e.maxDistanceKm)continue;let c=[],g=0;e.interests.includes(t.category)&&(g+=3,c.push(`you're into ${t.category}`)),s!==void 0&&(g+=Math.max(0,2-s/4),s<3&&c.push(`${s.toFixed(1)} km from ${e.home.label}`)),t.cost===0&&(g+=.5,c.push("free")),t.beginnerFriendly&&(g+=.5,c.push("beginner-friendly")),t.recurring&&(g+=.5,c.push(`happens ${t.recurring}, easy to become a regular`));let w=(Date.parse(t.start)-o.getTime())/864e5;g+=Math.max(0,1-w/7)*.5,a.push({event:t,distanceKm:s,score:Math.round(g*100)/100,reasons:c})}a.sort((t,l)=>l.score-t.score||Date.parse(t.event.start)-Date.parse(l.event.start)||t.event.id.localeCompare(l.event.id));let d=new Map,b=[];for(let t of a){let l=d.get(t.event.category)??0;if(!(l>=2)&&(d.set(t.event.category,l+1),b.push(t),b.length===(i.limit??5)))break}return b}return F(x);})();
 </script>
 <script>
-const { generateProposals, OutingLifecycle, formatLocal, fx } = Core;
-const TZ = fx.TZ;
-const MIN = 60000;
-const at = (m) => new Date(Date.parse(fx.NOW) + m * MIN).toISOString();
-const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+const { rankEvents, distanceKm, EVENTS, AREAS } = Core;
+const NOW = new Date("2026-10-18T05:00:00.000Z"); // demo "now": Sat Oct 17, 10 PM PT
+const TZ = "America/Los_Angeles";
 const $ = (s, r = document) => r.querySelector(s);
-const ART = { pickleball: "🏓", walk: "🌊", pho: "🍜" };
-const NAMES = { sarah: "Sarah", amir: "Amir", jenna: "Jenna", kai: "Kai" };
-const av = (id, sm = "") => `<div class="av ${sm} c-${id}" title="${NAMES[id]}">${NAMES[id][0]}</div>`;
-const time = (iso) => formatLocal(iso, TZ).replace(/^\w+, /, "");
-const hm = (iso) => new Intl.DateTimeFormat("en-US", { timeZone: TZ, hour: "numeric", minute: "2-digit" }).format(new Date(iso));
+const fmt = (iso, o) => new Intl.DateTimeFormat("en-US", { timeZone: TZ, ...o }).format(new Date(iso));
+const dayShort = (iso) => fmt(iso, { weekday: "short" });
+const time = (iso) => fmt(iso, { hour: "numeric", minute: "2-digit" });
+const price = (n) => (n === 0 ? "free" : "$" + n);
+const CATS = [["cafe","☕","cafés & pop-ups"],["sports","🏓","sports"],["swim","🏊","swimming"],["outdoors","🥾","outdoors"],["music","🎸","music"],["food","🥟","food"],["art","🎨","art"],["wellness","🧘","wellness"],["community","🌻","community"]];
+const HOODS = ["Capitol Hill","U District","Ballard","Fremont","Queen Anne","West Seattle","Bellevue","Redmond"];
+const WHEN = [["weekends","weekends"],["weekday_evenings","weeknights"],["weekday_mornings","mornings"]];
+const BUDGETS = [[0,"free only"],[10,"under $10"],[20,"under $20"],[undefined,"any"]];
+const AVC = ["#ffc857","#7fe0c4","#f6a6c1","#a9b8ff","#ffb4a2","#c9a6ff"];
 
-const STEPS = ["Ask", "Private replies", "Match", "Confirm", "Coordinate", "Run it back"];
-let state, run = 0;
-
+let S;
 function reset() {
-  const users = new Map(fx.users.map((u) => [u.id, { ...u }]));
-  state = { users, options: [], pick: null, life: null };
+  S = { events: JSON.parse(JSON.stringify(EVENTS)), profile: { interests: ["cafe","sports","outdoors"], home: AREAS["capitol hill"], maxBudget: 20, maxDistanceKm: 8, when: [] },
+        joined: new Set(), tab: "discover", view: "map", filter: "for-you", texts: null, view0: null };
 }
+reset();
 
-// ---------- shell ----------
-function rail(active) {
-  $("#steps").innerHTML = STEPS.map((s, i) =>
-    `<li><button data-i="${i}" class="${i === active ? "on" : i < active ? "done" : ""}"><b>${i + 1}</b>${s}</button></li>`).join("");
-}
-$("#steps").addEventListener("click", (e) => { const b = e.target.closest("button"); if (b) jump(+b.dataset.i); });
-
-function show(html, step) {
-  rail(step);
-  const s = $("#screen");
-  s.className = "screen"; void s.offsetWidth; s.className = "screen enter";
-  s.innerHTML = html;
-  return { id: ++run, alive() { return this.id === run; } };
-}
-
-function fit() {
-  const w = $("#wrap"), k = Math.min(1, (innerHeight - 48) / 844, (innerWidth - 32) / 390);
-  w.style.transform = `scale(${k})`;
-  w.style.margin = `${-(844 * (1 - k)) / 2}px ${-(390 * (1 - k)) / 2}px`;
-}
+// ------------------------------------------------------------ shell
+const STEPS = [["Tell us what you're into", () => onboarding(0)], ["Discover on the map", () => go("discover", "map")], ["Browse the list", () => go("discover", "list")],
+  ["Join and show up", () => { go("discover", "list"); setTimeout(() => openSheet(forYou()[0].event.id), 350); }], ["Your week", () => go("week")], ["Weekly text", () => go("texts")]];
+function rail(i) { $("#steps").innerHTML = STEPS.map(([s], k) => `<li><button data-i="${k}" class="${k === i ? "on" : ""}"><b>${k + 1}</b>${s}</button></li>`).join(""); }
+$("#steps").addEventListener("click", (e) => { const b = e.target.closest("button"); if (b) STEPS[+b.dataset.i][1](); });
+function fit() { const w = $("#wrap"), k = Math.min(1, (innerHeight - 48) / 844, (innerWidth - 32) / 390);
+  w.style.transform = `scale(${k})`; w.style.margin = `${-(844 * (1 - k)) / 2}px ${-(390 * (1 - k)) / 2}px`; }
 addEventListener("resize", fit); fit();
+function toast(t) { const el = document.createElement("div"); el.className = "toast"; el.textContent = t; $("#phone").append(el); setTimeout(() => el.remove(), 1800); }
+function screen(html) { closeSheet(true); const s = $("#screen"); s.className = "screen"; void s.offsetWidth; s.className = "screen enter"; s.innerHTML = html; return s; }
 
-// ---------- 1. ask ----------
-function parseRequest(text) {
-  // Lightweight on-device preview of what the assistant extracts (the LLM does this in the full product).
-  const t = text.toLowerCase(), chips = [];
-  const day = t.match(/\b(mon|tues|wednes|thurs|fri|satur|sun)day\b|\btoday\b|\btomorrow\b/);
-  const win = t.match(/(\d{1,2})(?::\d\d)?\s*(am|pm)?\s*(?:to|-|–)\s*(\d{1,2})(?::\d\d)?\s*(am|pm)?/);
-  if (day || win) chips.push(["📅", day ? day[0] : "when", win ? `${win[1]}–${win[3]}${win[4] || win[2] || " PM"}` : ""]);
-  const vibe = ["active", "chill", "outside", "food", "sports", "music", "walk", "eat"].find((k) => t.includes(k));
-  if (vibe) chips.push(["⚡", vibe, ""]);
-  if (/circle|friends|crew|group/.test(t)) chips.push(["👥", "weekend circle", ""]);
-  const money = t.match(/\$\s?(\d+)/); if (money) chips.push(["💸", "under", "$" + money[1]]);
-  return chips;
+// ------------------------------------------------------------ data
+const forYou = (limit = 5) => rankEvents(S.events, S.profile, NOW, { limit });
+function visible() {
+  if (S.filter === "for-you") return forYou(6);
+  return rankEvents(S.events, { ...S.profile, maxDistanceKm: 40, interests: [S.filter] }, NOW, { limit: 99 }).filter((p) => p.event.category === S.filter);
 }
+const ev = (id) => S.events.find((e) => e.id === id);
+const distTo = (e) => (S.profile.home ? distanceKm(S.profile.home, e) : null);
 
-function home() {
-  reset();
-  show(`
-    <div class="rise"><div class="kicker">sunday · weekend circle</div><h1>what are we<br>doing <em>today?</em></h1></div>
-    <div class="composer rise" style="animation-delay:.1s">
-      <label class="label" for="req">tell huddle what you feel like</label>
-      <textarea id="req" class="input" rows="3" placeholder="free sunday 2 to 6, something active, under $15"></textarea>
-      <button class="link" id="example">use example ↵</button>
-      <div class="chips" id="chips"></div>
-    </div>
-    <div class="circle-row rise" style="animation-delay:.2s">
-      <div><b>Weekend circle</b><span>4 people · all opted in</span></div>
-      <div class="avatars">${["sarah","amir","jenna","kai"].map((u) => av(u)).join("")}</div>
-    </div>
-    <button class="cta" id="go" disabled>find us a plan →</button>`, 0);
-  const req = $("#req"), go = $("#go"), chips = $("#chips");
-  const update = () => {
-    const parsed = parseRequest(req.value);
-    chips.innerHTML = parsed.map(([e, a, b]) => `<span class="chip">${e} ${a} ${b ? `<i>${b}</i>` : ""}</span>`).join("");
-    go.disabled = req.value.trim().length < 4;
-  };
-  req.addEventListener("input", update);
-  req.addEventListener("keydown", (e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); if (!go.disabled) gather(); } });
-  $("#example").onclick = () => { req.value = "free sunday 2 to 6, something active, with my weekend circle, under $15"; update(); req.focus(); };
-  go.onclick = gather;
-  setTimeout(() => req.focus(), 400);
-}
-
-// ---------- 2. private replies ----------
-function gather() {
-  show(`
-    <div class="rise"><div class="kicker">sent privately to each friend</div><h1>waiting on <em>replies</em></h1></div>
-    <div class="orbit"><div class="core"></div><div class="ring">
-      ${["amir","jenna","kai"].map((u, i) => {
-        const a = (i / 3) * Math.PI * 2 - Math.PI / 2;
-        return `<div class="av c-${u}" style="left:${125 + 125 * Math.cos(a) - 22}px;top:${125 + 125 * Math.sin(a) - 22}px"><span>${NAMES[u][0]}</span></div>`;
-      }).join("")}
-    </div></div>
-    <div class="label">tap a friend to bring in their reply</div>
-    <div class="replies">${["amir","jenna","kai"].map((u) =>
-      `<button class="reply tap" id="r-${u}" data-u="${u}">${av(u, "sm")} ${NAMES[u]}<span class="st">texting…</span></button>`).join("")}</div>
-    <div class="privacy">🔒 budgets, travel and any passes stay between each person and huddle. not even you see them.</div>
-    <button class="cta" id="next" disabled>see what works →</button>`, 1);
-  const done = new Set();
-  $(".replies").addEventListener("click", (e) => {
-    const r = e.target.closest(".reply"); if (!r || done.has(r.dataset.u)) return;
-    done.add(r.dataset.u); r.classList.add("in"); r.querySelector(".st").textContent = "✓ replied privately";
-    if (done.size === 3) $("#next").disabled = false;
+// ------------------------------------------------------------ 1. onboarding
+function onboarding(step) {
+  rail(0);
+  const dots = `<div class="dots">${[0,1,2].map((i) => `<i class="${i <= step ? "on" : ""}"></i>`).join("")}</div>`;
+  let body = "";
+  if (step === 0) body = `<div class="rise"><div class="kicker">welcome to huddle</div><h1>what are you <em>into?</em></h1></div>
+    <div class="chipset">${CATS.map(([c, e, l]) => `<button class="pick ${S.profile.interests.includes(c) ? "on" : ""}" data-c="${c}">${e} ${l}</button>`).join("")}</div>`;
+  if (step === 1) body = `<div class="rise"><div class="kicker">so we can find things close by</div><h1>where do you <em>hang out?</em></h1></div>
+    <div class="chipset">${HOODS.map((h) => `<button class="pick ${S.profile.home?.label === h ? "on" : ""}" data-h="${h}">📍 ${h}</button>`).join("")}</div>`;
+  if (step === 2) body = `<div class="rise"><div class="kicker">last one</div><h1>when are you <em>free?</em></h1></div>
+    <div class="chipset">${WHEN.map(([w, l]) => `<button class="pick ${S.profile.when.includes(w) ? "on" : ""}" data-w="${w}">${l}</button>`).join("")}</div>
+    <div class="label">budget per event</div>
+    <div class="chipset">${BUDGETS.map(([b, l], i) => `<button class="pick ${S.profile.maxBudget === b ? "on" : ""}" data-b="${i}">${l}</button>`).join("")}</div>`;
+  screen(`<div class="onb">${dots}${body}<div style="flex:1"></div>
+    <button class="cta" id="next">${step < 2 ? "next →" : "show me my week →"}</button></div>`);
+  $(".onb").addEventListener("click", (e) => {
+    const b = e.target.closest(".pick"); if (!b) return;
+    if (b.dataset.c) { const set = new Set(S.profile.interests); set.has(b.dataset.c) ? set.delete(b.dataset.c) : set.add(b.dataset.c); S.profile.interests = [...set]; b.classList.toggle("on"); }
+    if (b.dataset.h) { S.profile.home = AREAS[b.dataset.h.toLowerCase()]; document.querySelectorAll("[data-h]").forEach((x) => x.classList.toggle("on", x === b)); }
+    if (b.dataset.w) { const set = new Set(S.profile.when); set.has(b.dataset.w) ? set.delete(b.dataset.w) : set.add(b.dataset.w); S.profile.when = [...set]; b.classList.toggle("on"); }
+    if (b.dataset.b) { S.profile.maxBudget = BUDGETS[+b.dataset.b][0]; document.querySelectorAll("[data-b]").forEach((x) => x.classList.toggle("on", x === b)); }
+    $("#next").disabled = step === 0 && !S.profile.interests.length;
   });
-  $("#next").onclick = match;
+  $("#next").onclick = () => { if (step < 2) return onboarding(step + 1); S.view0 = null; S.texts = null; S.filter = "for-you"; go("discover", "map"); };
 }
 
-// ---------- 3. match ----------
-async function match() {
-  const res = generateProposals({ outing: fx.outing, users: state.users, grants: fx.grants,
-    responses: fx.responses, activities: fx.activities, now: fx.NOW });
-  state.options = res.options;
-  const mine = (c) => fx.responses.find((r) => r.userId === "sarah").travel[c.activity.venueId]?.minutes;
-  show(`
-    <div class="rise"><div class="kicker">checked every activity and start time</div><h1>${res.options.length} plans that <em>actually work</em></h1></div>
-    <div class="opts">${res.options.map((c, i) => `
-      <button class="opt rise" style="animation-delay:${.1 + i * .12}s" data-i="${i}">
-        <div class="art g-${c.activity.id}">${c.activity.isFixture ? '<span class="badge">sample</span>' : ""}${ART[c.activity.id] ?? "✨"}</div>
-        <div class="body">
-          <h3>${c.activity.name}</h3>
-          <div class="meta"><span><b>${hm(c.start)}</b> · ${c.activity.durationMinutes} min</span><span><b>${c.activity.costPerPerson ? "$" + c.activity.costPerPerson : "free"}</b></span><span>${c.activity.area}</span></div>
-          <div class="avatars">${c.attendeeIds.map((u) => av(u, "sm")).join("")}</div>
-          <div class="why">${c.activity.fitBlurb}</div>
-          <div class="mine">🔒 only you see: ${mine(c)} min away</div>
-        </div>
-      </button>`).join("")}</div>
-    <div class="privacy">Ranked by who can come, who's excited, then fairest travel. No one's budget or reasons are shown.</div>`, 2);
-  $(".opts").addEventListener("click", (e) => { const b = e.target.closest(".opt"); if (b) confirmPlan(state.options[+b.dataset.i]); });
-}
+// ------------------------------------------------------------ tabs
+const ICON = {
+  discover: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 21s-7-6.2-7-11.5A7 7 0 0 1 19 9.5C19 14.8 12 21 12 21z"/><circle cx="12" cy="9.5" r="2.5"/></svg>',
+  week: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="5" width="18" height="16" rx="3"/><path d="M3 10h18M8 3v4M16 3v4"/></svg>',
+  texts: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 5h16v11H9l-5 4z"/></svg>' };
+const tabs = () => `<nav class="tabs">${[["discover","Discover"],["week","My week"],["texts","Texts"]].map(([k, l]) =>
+  `<button data-t="${k}" class="${S.tab === k ? "on" : ""}">${ICON[k]}${l}${k === "week" && S.joined.size ? `<span class="badge">${S.joined.size}</span>` : ""}</button>`).join("")}</nav>`;
+function bindTabs() { $(".tabs").addEventListener("click", (e) => { const b = e.target.closest("button"); if (b) go(b.dataset.t); }); }
+function refreshTabs() { const t = $(".tabs"); if (t) { t.outerHTML = tabs(); bindTabs(); } }
+function go(tab, view) { S.tab = tab; if (view) S.view = view; ({ discover, week, texts })[tab](); }
 
-// ---------- 4. confirm ----------
-async function confirmPlan(c) {
-  if (!c) { await ensureOptions(); c = state.options[0]; }
-  state.pick = c;
-  const life = new OutingLifecycle(fx.outing, state.users);
-  state.life = life;
-  life.openCollecting();
-  life.propose("p1", "sarah", c, fx.NOW);
-  const v = life.pendingVersion;
-  show(`
-    <div class="plan rise">
-      <div class="hero g-${c.activity.id}">${ART[c.activity.id]}<span class="ver">v${v}</span></div>
-      <div class="info"><h2>${c.activity.name}</h2>
-        <div class="when">${time(c.start)} – ${hm(c.end)}</div>
-        <div class="where">${c.activity.venueName} · ${c.activity.area} · ${c.activity.costPerPerson ? "$" + c.activity.costPerPerson : "free"}</div></div>
+// ------------------------------------------------------------ 2/3. discover
+function discover() {
+  rail(S.view === "map" ? 1 : 2);
+  const chips = [["for-you","✨ for you"], ...CATS.map(([c, e]) => [c, `${e} ${c}`])];
+  screen(`
+    <div class="top">
+      <div><div class="kicker">this week near ${S.profile.home?.label ?? "you"}</div><h1>what's <em>happening</em></h1></div>
+      <div class="seg"><button data-v="map" class="${S.view === "map" ? "on" : ""}">Map</button><button data-v="list" class="${S.view === "list" ? "on" : ""}">List</button></div>
+      <div class="filters">${chips.map(([k, l]) => `<button data-f="${k}" class="${S.filter === k ? "on" : ""}">${l}</button>`).join("")}</div>
     </div>
-    <div class="label">everyone confirms this exact plan · tap a friend to confirm as them</div>
-    <div class="roster">${c.attendeeIds.map((u) =>
-      `<button class="who tap" id="w-${u}" data-u="${u}">${av(u, "sm")} ${NAMES[u]}${u === "sarah" ? " (you)" : ""}<span class="st">waiting</span></button>`).join("")}</div>
-    <div class="deadline">replies close in 30 min · silence or "maybe" never counts as yes</div>
-    <button class="cta" id="me">confirm v${v} & share my contact</button>`, 3);
+    <div class="body" id="body"></div>${tabs()}`);
+  bindTabs();
+  $(".seg").onclick = (e) => { const b = e.target.closest("button"); if (b) { S.view = b.dataset.v; discover(); } };
+  $(".filters").onclick = (e) => { const b = e.target.closest("button"); if (!b) return; S.filter = b.dataset.f;
+    $(".filters").querySelectorAll("button").forEach((x) => x.classList.toggle("on", x === b)); S.view === "map" ? drawMap() : drawList(); };
+  S.view === "map" ? drawMap() : drawList();
+}
 
-  const accept = async (u) => {
-    const r = life.accept(`a:${u}`, u, v, true, at(2));
-    if (!r.ok) return;
-    const s = $(`#w-${u} .st`); s.className = "st ok"; s.innerHTML = '<span class="tick">✓</span> confirmed';
-    if (u === "sarah") { $("#me").disabled = true; $("#me").textContent = "you're in · waiting on friends"; }
-    if (r.message === "confirmed") { await sleep(600); celebrate(); }
+function drawList() {
+  const picks = visible(), body = $("#body");
+  if (!picks.length) { body.innerHTML = `<div class="empty">Nothing in this category fits your settings this week.<button class="ghost" id="clr">show everything for you</button></div>`;
+    $("#clr").onclick = () => { S.filter = "for-you"; discover(); }; return; }
+  body.innerHTML = `<div class="list">${S.filter === "for-you" ? `<div class="label">picked for you</div>` : ""}${picks.map((p, i) => card(p, i)).join("")}</div>`;
+  body.querySelector(".list").onclick = (e) => { const c = e.target.closest(".ev"); if (c) openSheet(c.dataset.id); };
+}
+function card(p, i) {
+  const e = p.event, d = p.distanceKm;
+  return `<button class="ev" data-id="${e.id}" style="animation-delay:${i * .05}s">
+    <div class="tile c-${e.category}">${e.emoji}</div>
+    <div style="min-width:0"><h3>${e.title}</h3>
+      <div class="meta">${dayShort(e.start)} ${time(e.start)} · ${e.neighborhood}${d != null ? ` · ${d.toFixed(1)} km` : ""} · ${price(e.cost)}</div>
+      <div class="why">${S.joined.has(e.id) ? "✓ you're going" : `${e.going} going${p.reasons.length ? " · " + p.reasons.slice(0, 2).join(" · ") : ""}`}</div></div></button>`;
+}
+
+// ---- map: hand-drawn Seattle in lat/lng, projected with a cos(lat) correction
+const KX = Math.cos(47.62 * Math.PI / 180) * 1000, KY = 1000;
+const P = (lat, lng) => [+((lng + 122.45) * KX).toFixed(1), +((47.73 - lat) * KY).toFixed(1)];
+const poly = (pts) => pts.map(([a, b]) => P(a, b).join(",")).join(" ");
+const WATER = [
+  [[47.75,-122.47],[47.75,-122.385],[47.72,-122.38],[47.70,-122.395],[47.685,-122.405],[47.668,-122.405],[47.66,-122.425],[47.645,-122.42],[47.633,-122.395],[47.628,-122.38],[47.62,-122.365],[47.61,-122.352],[47.6,-122.342],[47.59,-122.345],[47.585,-122.362],[47.582,-122.39],[47.587,-122.413],[47.575,-122.42],[47.555,-122.405],[47.53,-122.40],[47.53,-122.47]],
+  [[47.75,-122.278],[47.72,-122.272],[47.70,-122.268],[47.68,-122.262],[47.665,-122.28],[47.655,-122.283],[47.648,-122.29],[47.642,-122.284],[47.63,-122.278],[47.615,-122.283],[47.6,-122.285],[47.585,-122.275],[47.57,-122.265],[47.55,-122.262],[47.53,-122.255],[47.53,-122.205],[47.55,-122.215],[47.57,-122.225],[47.585,-122.24],[47.6,-122.215],[47.612,-122.208],[47.625,-122.215],[47.64,-122.225],[47.66,-122.215],[47.68,-122.21],[47.70,-122.225],[47.72,-122.24],[47.75,-122.25]],
+  [[47.651,-122.345],[47.651,-122.33],[47.645,-122.325],[47.633,-122.329],[47.626,-122.335],[47.628,-122.343],[47.64,-122.347]],
+  [[47.65,-122.11],[47.64,-122.095],[47.6,-122.085],[47.57,-122.075],[47.57,-122.06],[47.6,-122.06],[47.64,-122.07],[47.655,-122.09]],
+];
+const CANALS = [[[47.651,-122.345],[47.653,-122.36],[47.659,-122.375],[47.665,-122.395],[47.667,-122.405]], [[47.648,-122.326],[47.648,-122.31],[47.651,-122.296],[47.655,-122.283]]];
+const ROADS = [[[47.75,-122.322],[47.68,-122.321],[47.66,-122.322],[47.645,-122.325],[47.62,-122.327],[47.6,-122.322],[47.58,-122.32],[47.53,-122.31]],
+  [[47.645,-122.305],[47.643,-122.27],[47.636,-122.215],[47.63,-122.185]], [[47.59,-122.315],[47.59,-122.265],[47.585,-122.225],[47.58,-122.17]],
+  [[47.75,-122.185],[47.68,-122.19],[47.62,-122.189],[47.53,-122.19]], [[47.66,-122.19],[47.67,-122.15],[47.67,-122.12]],
+  [[47.62,-122.36],[47.65,-122.37],[47.69,-122.375],[47.73,-122.38]]];
+const PARKS = [[47.659,-122.412,.006,.009],[47.6305,-122.315,.002,.002],[47.6455,-122.3345,.0012,.002],[47.662,-122.12,.006,.008],[47.69,-122.402,.003,.002],[47.672,-122.29,.003,.006]];
+const LABELS = [["Ballard",47.672,-122.386],["Fremont",47.655,-122.352],["Capitol Hill",47.623,-122.317],["U District",47.664,-122.31],["Queen Anne",47.637,-122.359],["West Seattle",47.565,-122.385],["Downtown",47.606,-122.335],["Bellevue",47.613,-122.19],["Redmond",47.674,-122.13],["Green Lake",47.689,-122.33],["Magnolia",47.648,-122.398]];
+const COLORS = { cafe:"#e9a66b", sports:"#ff9a59", swim:"#5aa9ff", outdoors:"#56c98d", music:"#a98bff", food:"#f07a8a", art:"#d98bbd", wellness:"#6fd1b8", community:"#f2c35a" };
+
+function drawMap() {
+  const picks = visible(), shown = new Set(picks.map((p) => p.event.id));
+  const body = $("#body"), W = 390, H = Math.max(300, body.clientHeight || 520);
+  if (!S.view0) { const [hx, hy] = S.profile.home ? P(S.profile.home.lat, S.profile.home.lng) : P(47.63, -122.33); S.view0 = { x: hx - 70, y: hy - 70 * H / W, w: 140, h: 140 * H / W }; }
+  const v = S.view0, k = v.w / 140;
+  const pins = S.events.filter((e) => Date.parse(e.start) > NOW.getTime()).map((e) => {
+    const [x, y] = P(e.lat, e.lng), on = shown.has(e.id), r = 8 * k;
+    return `<g class="pin ${on ? "" : "dim"} ${S.joined.has(e.id) ? "joined" : ""}" data-id="${e.id}" transform="translate(${x},${y})">
+      ${S.joined.has(e.id) ? `<circle class="ring" r="${r + 3 * k}" stroke-width="${1.8 * k}"/>` : ""}
+      <circle class="bg" r="${r}" fill="${COLORS[e.category]}" stroke-width="${2 * k}"/>
+      <text style="font-size:${9.5 * k}px">${e.emoji}</text></g>`; }).join("");
+  const home = S.profile.home ? (() => { const [x, y] = P(S.profile.home.lat, S.profile.home.lng);
+    return `<g class="me" transform="translate(${x},${y})"><circle class="pulse" r="${7 * k}"/><circle r="${4 * k}" fill="#ff7a59" stroke="#fff" stroke-width="${1.4 * k}"/></g>`; })() : "";
+  const [gx, gy] = P(47.6805, -122.336);
+  body.innerHTML = `<div class="map" id="map">
+    <div class="maplegend">${picks.length} ${S.filter === "for-you" ? "picks for you" : S.filter} · sample events</div>
+    <div class="mapctl"><button id="zi" aria-label="Zoom in">+</button><button id="zo" aria-label="Zoom out">−</button><button id="zc" aria-label="Recenter">◎</button></div>
+    <svg id="svg" viewBox="${v.x} ${v.y} ${v.w} ${v.h}" preserveAspectRatio="xMidYMid slice">
+      ${PARKS.map(([la, ln, a, b]) => { const [x, y] = P(la, ln); return `<ellipse class="park" cx="${x}" cy="${y}" rx="${b * KX}" ry="${a * KY}"/>`; }).join("")}
+      ${WATER.map((w) => `<polygon class="water" points="${poly(w)}"/>`).join("")}
+      ${CANALS.map((c) => `<polyline class="canal" stroke-width="2.4" points="${poly(c)}"/>`).join("")}
+      <ellipse class="park" cx="${gx}" cy="${gy}" rx="${.0075 * KX}" ry="${.008 * KY}"/><ellipse class="water" cx="${gx}" cy="${gy}" rx="${.0055 * KX}" ry="${.006 * KY}"/>
+      ${ROADS.map((r) => `<polyline class="road" stroke-width="${1.4 * k}" points="${poly(r)}"/>`).join("")}
+      ${LABELS.map(([l, la, ln]) => { const [x, y] = P(la, ln); return `<text class="hood" x="${x}" y="${y}" style="font-size:${5 * k}px">${l}</text>`; }).join("")}
+      ${home}${pins}
+    </svg></div>`;
+  const svg = $("#svg"), map = $("#map");
+  const setV = () => svg.setAttribute("viewBox", `${v.x} ${v.y} ${v.w} ${v.h}`);
+  const zoom = (f, cx = v.x + v.w / 2, cy = v.y + v.h / 2) => { const nw = Math.min(420, Math.max(40, v.w * f)), nh = nw * v.h / v.w;
+    v.x = cx - (cx - v.x) * nw / v.w; v.y = cy - (cy - v.y) * nh / v.h; v.w = nw; v.h = nh; drawMap(); };
+  $("#zi").onclick = () => zoom(.7); $("#zo").onclick = () => zoom(1.45); $("#zc").onclick = () => { S.view0 = null; drawMap(); };
+  map.addEventListener("wheel", (e) => { e.preventDefault(); const r = svg.getBoundingClientRect();
+    zoom(e.deltaY > 0 ? 1.15 : .87, v.x + (e.clientX - r.left) / (r.width || 1) * v.w, v.y + (e.clientY - r.top) / (r.height || 1) * v.h); }, { passive: false });
+  let drag = null;
+  map.addEventListener("pointerdown", (e) => { if (e.target.closest(".mapctl")) return;
+    drag = { x: e.clientX, y: e.clientY, vx: v.x, vy: v.y, moved: false, id: e.target.closest(".pin")?.dataset.id };
+    try { map.setPointerCapture(e.pointerId); } catch {} });
+  map.addEventListener("pointermove", (e) => { if (!drag) return; const r = svg.getBoundingClientRect();
+    const dx = e.clientX - drag.x, dy = e.clientY - drag.y; if (Math.abs(dx) + Math.abs(dy) > 4) drag.moved = true;
+    v.x = drag.vx - dx * v.w / (r.width || 1); v.y = drag.vy - dy * v.h / (r.height || 1); setV(); });
+  map.addEventListener("pointerup", () => { const d = drag; drag = null; if (d && !d.moved && d.id) openSheet(d.id); });
+}
+
+// ------------------------------------------------------------ 4. event sheet + join
+function closeSheet(silent) {
+  document.querySelectorAll(".sheet,.scrim").forEach((x) => x.remove());
+  if (!silent && S.tab === "discover") { S.view === "map" ? drawMap() : drawList(); rail(S.view === "map" ? 1 : 2); }
+  if (!silent && S.tab === "week") week();
+}
+function openSheet(id) {
+  rail(3);
+  const e = ev(id), d = distTo(e);
+  const p = rankEvents(S.events, { ...S.profile, maxDistanceKm: 99, maxBudget: undefined, when: [] }, NOW, { limit: 99 }).find((x) => x.event.id === id);
+  const n = +id.slice(1);
+  const avs = Array.from({ length: Math.min(5, e.going) }, (_, i) => `<div class="av" style="background:${AVC[(i + n) % AVC.length]}">${"ABCDEFGHJKLMNPRSTW"[(i * 7 + n) % 18]}</div>`).join("");
+  closeSheet(true);
+  $("#phone").insertAdjacentHTML("beforeend", `<div class="scrim" id="scrim"></div><div class="sheet" role="dialog" aria-label="${e.title}">
+    <div class="grab"></div><button class="close" id="x" aria-label="Close">✕</button>
+    <div class="hero c-${e.category}"><span class="sample">sample event</span>${e.emoji}</div>
+    <div><div class="kicker">${e.host}</div><h2>${e.title}</h2></div>
+    <div class="facts">
+      <div>🗓 ${fmt(e.start, { weekday: "long", month: "short", day: "numeric" })} · ${time(e.start)} – ${time(e.end)}</div>
+      <div>📍 ${e.place}, ${e.neighborhood}${d != null ? ` <span>· ${d.toFixed(1)} km from ${S.profile.home.label}</span>` : ""}</div>
+      <div>💸 ${price(e.cost)}${e.beginnerFriendly ? " <span>· beginner-friendly</span>" : ""}</div></div>
+    <div style="font-size:14px;line-height:1.5;color:#d9d4cc">${e.blurb}</div>
+    <div class="people"><div class="avs">${avs}</div><span id="cnt">${e.going} going · ${e.capacity - e.going} spots left</span></div>
+    <div class="bar"><i id="fill" style="width:${(e.going / e.capacity) * 100}%"></i></div>
+    ${e.recurring ? `<div class="regular">🔁 Happens <b>${e.recurring}</b>. Come three times and you're a regular. Huddle can save your spot each week.</div>` : ""}
+    ${p?.reasons?.length ? `<div class="kicker">why it's for you: ${p.reasons.join(" · ")}</div>` : ""}
+    <div class="row"><button class="ghost" id="share">↗ invite</button><button class="cta" id="join"></button></div>
+  </div>`);
+  const label = () => { $("#join").textContent = S.joined.has(id) ? "✓ you're going · tap to leave" : "I'm going"; };
+  label();
+  $("#scrim").onclick = () => closeSheet(); $("#x").onclick = () => closeSheet();
+  $("#share").onclick = () => toast("invite link copied (demo)");
+  $("#join").onclick = () => {
+    if (S.joined.has(id)) { S.joined.delete(id); e.going--; toast("you're off the list"); }
+    else { if (e.going >= e.capacity) return toast("this one's full"); S.joined.add(id); e.going++; confetti(); toast(`you're in! ${e.going - 1} others going`); }
+    label();
+    $("#cnt").textContent = `${e.going} going · ${e.capacity - e.going} spots left`;
+    $("#fill").style.width = `${(e.going / e.capacity) * 100}%`;
+    refreshTabs();
   };
-  $("#me").onclick = () => accept("sarah");
-  $(".roster").addEventListener("click", (e) => { const b = e.target.closest(".who"); if (b) accept(b.dataset.u); });
 }
 
-async function celebrate() {
-  const c = state.pick, life = state.life;
-  const group = life.outbox.find((j) => j.kind === "create_group");
-  const t = show(`
-    <div style="flex:1;display:grid;place-content:center;gap:22px">
-      <div class="big-emoji">${ART[c.activity.id]}</div>
-      <div class="won"><div class="kicker">plan confirmed · v${life.currentVersion}</div><h1>you're <em>on.</em></h1>
-        <div class="privacy" style="justify-content:center">${hm(c.start)} · ${c.activity.venueName}</div></div>
-      <div class="avatars" style="justify-content:center">${c.attendeeIds.map((u) => av(u)).join("")}</div>
-      <div class="sys">group chat created with only the ${group.to.length} confirmed people.<br>reminder set for ${hm(new Date(Date.parse(life.current.plan.start) - 60 * MIN).toISOString())}.</div>
-    </div>
-    <button class="cta" id="open">open group chat →</button>`, 3);
-  confetti();
-  $("#open").onclick = thread;
+// ------------------------------------------------------------ 5. my week
+function week() {
+  rail(4);
+  const mine = [...S.joined].map(ev).sort((a, b) => Date.parse(a.start) - Date.parse(b.start));
+  const days = {};
+  for (const e of mine) (days[fmt(e.start, { weekday: "long", month: "short", day: "numeric" })] ??= []).push(e);
+  const regulars = mine.filter((e) => e.recurring).length;
+  screen(`<div class="top"><div><div class="kicker">${mine.length ? `${mine.length} plan${mine.length > 1 ? "s" : ""} this week` : "nothing yet"}</div><h1>your <em>week</em></h1></div></div>
+    <div class="week">${mine.length ? `
+      <div class="streak"><b>${mine.length}</b><div>${mine.length === 1 ? "event" : "events"} this week${regulars ? `, ${regulars} of them weekly. Keep showing up and they become your regular spots.` : ". Weekly events are the easiest way to become a regular."}</div></div>
+      ${Object.entries(days).map(([d, es]) => `<div class="day"><div class="d">${d}</div>${es.map((e, i) => card({ event: e, distanceKm: distTo(e), reasons: [] }, i)).join("")}</div>`).join("")}`
+      : `<div class="empty">You haven't joined anything yet.<br>Pick something small. Showing up is the whole thing.<button class="cta" id="find">find something →</button></div>`}
+    </div>${tabs()}`);
+  bindTabs();
+  $("#find")?.addEventListener("click", () => go("discover", "list"));
+  $(".week").addEventListener("click", (e) => { const c = e.target.closest(".ev"); if (c) openSheet(c.dataset.id); });
 }
 
-// ---------- 5. coordinate ----------
-function pinned(p) {
-  return `<div class="pinned" id="pin"><div class="art g-${p.plan.activity.id}">${ART[p.plan.activity.id]}</div>
-    <div><b>${p.plan.activity.name}</b><span>${time(p.plan.start)} · ${p.plan.activity.venueName}</span></div><span class="ver">v${p.version}</span></div>`;
+// ------------------------------------------------------------ 6. the weekly iMessage
+const esc = (t) => t.replace(/&/g, "&amp;").replace(/</g, "&lt;");
+function digestText(picks) {
+  return `🗓 your week near ${S.profile.home?.label ?? "you"} (sample events)\n\n` +
+    picks.map((p, i) => `${i + 1}. ${p.event.emoji} ${p.event.title}\n   ${dayShort(p.event.start)} ${time(p.event.start)} · ${p.event.neighborhood} · ${price(p.event.cost)} · ${p.event.going} going`).join("\n\n") +
+    "\n\nreply a number to join (like 1), INFO 2 for details, or MORE.";
 }
-async function thread() {
-  if (!state.life) await quickConfirm();
-  const life = state.life;
-  show(`
-    ${pinned(life.current)}
-    <div class="thread" id="th"><div class="sys">🔒 only confirmed people are in this chat</div></div>
-    <div class="label">simulate</div>
-    <div class="actions">
-      <button class="mini" id="amir">Amir asks for 3 PM</button>
-      <button class="mini" id="late">I'm running late</button>
-      <button class="mini" id="msg">Jenna sends a message</button>
-      <button class="mini go" id="after">it's over →</button>
-    </div>`, 4);
-  const th = $("#th");
-  const add = (html) => { th.insertAdjacentHTML("beforeend", html); };
-  $("#after").onclick = repeat;
-  $("#msg").onclick = () => add(`<div class="bub them"><small>Jenna</small>so hyped 🏓 bringing extra paddles</div>`);
-  $("#late").onclick = () => {
-    life.recordLateness("late:" + Date.now(), "sarah", 10, at(290));
-    add(`<div class="sys">heads-up sent to the others: <b>Sarah is running about 10 min late</b>. plan time unchanged, no location shared.</div>`);
-  };
-  $("#amir").onclick = () => {
-    if (life.pending) return;
-    $("#amir").disabled = true;
-    add(`<div class="bub them"><small>Amir</small>can we push to 3? my bus is being weird</div>`);
-    const start = Date.parse(life.current.plan.start) + 30 * MIN;
-    life.requestChange("chg:" + Date.now(), "amir",
-      { start: new Date(start).toISOString(), end: new Date(start + life.current.plan.activity.durationMinutes * MIN).toISOString() }, true, at(5));
-    const pv = life.pending;
-    add(`<div class="change" id="chg"><b>Amir proposed v${pv.version}: start at ${hm(pv.plan.start)}</b>
-      <p>v${life.currentVersion} at ${hm(life.current.plan.start)} stays the plan until everyone approves.</p>
-      <div class="row"><button class="mini" id="keep">keep ${hm(life.current.plan.start)}</button><button class="mini go" id="ok">works for me</button></div></div>`);
-    $("#keep").onclick = () => {
-      life.decline("d:" + Date.now(), "sarah", pv.version, at(6));
-      $("#chg").outerHTML = `<div class="sys">change declined. v${life.currentVersion} stays the plan. nobody sees who said no.</div>`;
-      $("#amir").disabled = false;
-    };
-    $("#ok").onclick = () => {
-      for (const u of pv.plan.attendeeIds) life.accept(`c:${pv.version}:${u}`, u, pv.version, true, at(6));
-      $("#chg").outerHTML = `<div class="sys">✓ everyone approved. plan updated to v${life.currentVersion}, reminder moved.</div>`;
-      $("#pin").outerHTML = pinned(life.current); $("#pin").classList.add("flip");
-      $("#amir").disabled = false;
-    };
-  };
+function texts() {
+  rail(5);
+  if (!S.texts) { const picks = forYou(); S.texts = { list: picks.map((p) => p.event.id), msgs: [["ts", "Sunday 9:00 AM"], ["them", "good morning ☀️ here's your week:"], ["them", digestText(picks)]] }; }
+  screen(`<div class="imsg"><div class="imsg-head"><div class="av">h</div><span>Huddle</span></div>
+    <div class="thread" id="th">${S.texts.msgs.map(([w, t]) => w === "ts" ? `<div class="ts">${t}</div>` : `<div class="b ${w}">${esc(t)}</div>`).join("")}</div></div>
+    <div class="quick" id="quick">${["1","INFO 2","MORE","something outdoorsy","MY"].map((q) => `<button type="button">${q}</button>`).join("")}</div>
+    <form class="compose" id="cf"><input id="ci" placeholder="iMessage" autocomplete="off" aria-label="Message Huddle"><button aria-label="Send">↑</button></form>${tabs()}`);
+  bindTabs();
+  const th = $("#th"); th.scrollTop = th.scrollHeight;
+  const add = (w, t) => { S.texts.msgs.push([w, t]); th.insertAdjacentHTML("beforeend", `<div class="b ${w}">${esc(t)}</div>`); th.scrollTop = th.scrollHeight; };
+  const send = (t) => { if (!t.trim()) return; add("me", t); setTimeout(() => { if ($("#th") === th) add("them", reply(t.trim())); }, 600); };
+  $("#cf").onsubmit = (e) => { e.preventDefault(); send($("#ci").value); $("#ci").value = ""; };
+  $("#quick").onclick = (e) => { const b = e.target.closest("button"); if (b) send(b.textContent); };
 }
-
-// ---------- 6. run it back ----------
-async function repeat() {
-  if (!state.life) await quickConfirm();
-  const life = state.life;
-  if (life.pending) life.decline("d:end", "sarah", life.pendingVersion, at(7));
-  if (life.state === "confirmed") life.complete(at(420));
-  const t = show(`
-    <div style="flex:1;display:grid;align-content:center;gap:22px">
-      <div class="big-emoji">${ART[life.current.plan.activity.id]}</div>
-      <div class="won"><div class="kicker">only you see this</div><h1>run it back <em>next sunday?</em></h1></div>
-      <div class="choice" id="choice"><button class="ghost" id="pass">pass</button><button class="cta" id="yes" style="margin:0">yes, again</button></div>
-      <div id="out"></div>
-    </div>
-    <button class="ghost" id="restart">↺ restart demo</button>`, 5);
-  $("#restart").onclick = home;
-  const answer = (yes) => {
-    life.recordRepeat("sarah", yes); life.recordRepeat("amir", true); life.recordRepeat("jenna", true); life.recordRepeat("kai", false);
-    const roster = life.nextRoundRoster();
-    $("#choice").remove();
-    $("#out").innerHTML = `<div class="note">
-      <div class="label">next week's round</div>
-      <div class="avatars">${roster.map((u) => av(u)).join("")}</div>
-      <div>${roster.length} people said yes. huddle will ask each of them for fresh availability on thursday. passes stay private, and nobody is signed up automatically.</div></div>`;
-  };
-  $("#yes").onclick = () => answer(true);
-  $("#pass").onclick = () => answer(false);
-}
-
-// ---------- helpers ----------
-async function ensureOptions() {
-  if (state.options.length) return;
-  state.options = generateProposals({ outing: fx.outing, users: state.users, grants: fx.grants,
-    responses: fx.responses, activities: fx.activities, now: fx.NOW }).options;
-}
-async function quickConfirm() {
-  await ensureOptions();
-  const c = state.options[0]; state.pick = c;
-  const life = new OutingLifecycle(fx.outing, state.users); state.life = life;
-  life.openCollecting(); life.propose("p1", "sarah", c, fx.NOW);
-  for (const u of c.attendeeIds) life.accept(`a:${u}`, u, 1, true, at(2));
-}
-async function jump(i) {
-  if (i === 0) return home();
-  if (!state) reset();
-  if (i >= 3) { reset(); await ensureOptions(); }
-  if (i === 4 || i === 5) await quickConfirm();
-  [home, gather, match, () => confirmPlan(), thread, repeat][i]();
+const MOODS = { cafe: /caf|coffee|matcha|pop/i, sports: /sport|ball|run|climb/i, swim: /swim|pool/i, outdoors: /outdoor|hike|nature|kayak|bike/i,
+  music: /music|jam|mic/i, food: /food|eat|dumpling|ramen/i, art: /art|sketch|draw/i, wellness: /yoga|sauna|wellness/i, community: /community|volunteer|game/i };
+function reply(t) {
+  const up = t.toUpperCase(), L = S.texts.list;
+  const n = up.match(/^(?:JOIN\s*)?(\d)$/);
+  if (n) { const e = ev(L[+n[1] - 1]); if (!e) return "that number isn't on your list. text EVENTS to see it again.";
+    if (S.joined.has(e.id)) return `you're already in for ${e.title}!`;
+    S.joined.add(e.id); e.going++; refreshTabs();
+    return `you're in! ${e.emoji} ${e.title}\n${fmt(e.start, { weekday: "long" })}, ${time(e.start)} · ${e.place}\n${e.going - 1} others going. I'll text you a reminder before it starts.${e.recurring ? `\n\nit happens ${e.recurring}, so come a few times and you'll be a regular.` : ""}`; }
+  const info = up.match(/^INFO\s*(\d)$/);
+  if (info) { const e = ev(L[+info[1] - 1]); return e ? `${e.emoji} ${e.title}\n${fmt(e.start, { weekday: "long", month: "short", day: "numeric" })}, ${time(e.start)} – ${time(e.end)}\n📍 ${e.place}\n${price(e.cost)} · ${e.going}/${e.capacity} going\n\n${e.blurb}\n\nreply ${info[1]} to join.` : "that number isn't on your list."; }
+  if (up === "MORE") { const p = rankEvents(S.events, S.profile, NOW, { limit: 5, excludeIds: new Set([...L, ...S.joined]) }); if (!p.length) return "that's everything for this week!"; S.texts.list = p.map((x) => x.event.id); return digestText(p); }
+  if (up === "MY") { const m = [...S.joined].map(ev); return m.length ? "your plans:\n\n" + m.map((e) => `${e.emoji} ${e.title}, ${dayShort(e.start)} ${time(e.start)}`).join("\n") : "nothing yet. text EVENTS to find something."; }
+  if (up === "EVENTS") { const p = forYou(); S.texts.list = p.map((x) => x.event.id); return digestText(p); }
+  const mood = Object.keys(MOODS).filter((c) => MOODS[c].test(t));
+  if (mood.length) { const p = rankEvents(S.events, { ...S.profile, interests: mood }, NOW, { limit: 5 }); if (!p.length) return "nothing like that fits your settings this week."; S.texts.list = p.map((x) => x.event.id); return digestText(p); }
+  return "EVENTS · MORE · 1, 2, 3 to join · INFO 2 · MY · or text a mood like \"something outdoorsy\"";
 }
 
 function confetti() {
-  const phone = $("#phone");
-  const cv = document.createElement("canvas"); cv.className = "confetti";
-  cv.width = 390 * 2; cv.height = 844 * 2; phone.append(cv);
+  const cv = document.createElement("canvas"); cv.className = "confetti"; cv.width = 780; cv.height = 1688; $("#phone").append(cv);
   const ctx = cv.getContext("2d"); ctx.scale(2, 2);
   const colors = ["#ff7a59", "#ffc857", "#7fe0c4", "#f6a6c1", "#a9b8ff"];
-  const ps = Array.from({ length: 140 }, () => ({ x: 195, y: 330, vx: (Math.random() - .5) * 14, vy: -Math.random() * 14 - 4,
-    r: Math.random() * 6 + 4, a: Math.random() * 6, va: (Math.random() - .5) * .4, c: colors[Math.floor(Math.random() * colors.length)] }));
+  const ps = Array.from({ length: 110 }, () => ({ x: 195, y: 640, vx: (Math.random() - .5) * 12, vy: -Math.random() * 15 - 5, r: Math.random() * 6 + 4, a: Math.random() * 6, va: (Math.random() - .5) * .4, c: colors[Math.floor(Math.random() * 5)] }));
   const t0 = performance.now();
-  (function frame(now) {
-    ctx.clearRect(0, 0, 390, 844);
-    for (const p of ps) { p.vy += .35; p.vx *= .99; p.x += p.vx; p.y += p.vy; p.a += p.va;
-      ctx.save(); ctx.translate(p.x, p.y); ctx.rotate(p.a); ctx.fillStyle = p.c; ctx.fillRect(-p.r / 2, -p.r / 4, p.r, p.r / 2); ctx.restore(); }
-    if (now - t0 < 3200) requestAnimationFrame(frame); else cv.remove();
-  })(t0);
+  (function f(now) { ctx.clearRect(0, 0, 390, 844);
+    for (const p of ps) { p.vy += .38; p.x += p.vx; p.y += p.vy; p.a += p.va; ctx.save(); ctx.translate(p.x, p.y); ctx.rotate(p.a); ctx.fillStyle = p.c; ctx.fillRect(-p.r / 2, -p.r / 4, p.r, p.r / 2); ctx.restore(); }
+    if (now - t0 < 2600) requestAnimationFrame(f); else cv.remove(); })(t0);
 }
 
-home();
+onboarding(0);
 </script>
 
 </body></html>
