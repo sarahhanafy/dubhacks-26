@@ -1,8 +1,8 @@
 // Offline rehearsal: `npm run sim` plays a full conversation with a fake transport.
-import { HuddleBot } from "./bot.js";
+import { CookingBot } from "./bot.js";
 
 let now = new Date("2026-10-18T05:00:00.000Z"); // Sat Oct 17, 10 PM PT
-const bot = new HuddleBot({ async dm(_id, text) { console.log(`\x1b[35mhuddle:\x1b[0m ${text}\n`); } }, () => now);
+const bot = new CookingBot({ async dm(_id, text) { console.log(`\x1b[35mwhat's cooking:\x1b[0m ${text}\n`); } }, () => now);
 const me = "+12065550100";
 const say = async (t: string) => { console.log(`\x1b[36mme:\x1b[0m ${t}`); await bot.handle(me, t); };
 

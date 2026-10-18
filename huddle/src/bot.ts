@@ -1,4 +1,4 @@
-// Huddle over iMessage: 3 quick questions, then a weekly text of events near you.
+// What's Cooking over iMessage: 3 quick questions, then a weekly text of events near you.
 // Transport-agnostic so it can be tested with a fake (see sim.ts).
 
 import { readFileSync, writeFileSync, mkdirSync } from "node:fs";
@@ -28,7 +28,7 @@ const longWhen = (iso: string) => `${fmt(iso, { weekday: "long", month: "short",
 const price = (n: number) => (n === 0 ? "free" : `$${n}`);
 const weekKey = (d: Date) => { const s = new Date(d); s.setUTCDate(s.getUTCDate() - s.getUTCDay()); return s.toISOString().slice(0, 10); };
 
-export class HuddleBot {
+export class CookingBot {
   users = new Map<string, UserState>();
   events: CommunityEvent[] = structuredClone(EVENTS);
 
@@ -67,7 +67,7 @@ export class HuddleBot {
       this.users.set(fromId, u);
       this.save();
       return this.say(u,
-        "hey! I'm Huddle 👋 every week I'll text you a few things happening near you, like pop-up cafes, open courts, swims and hikes, so it's easy to show up and meet people.\n\n" +
+        "hey! this is what's cooking 🍳 every week I'll text you a few things happening near you, like pop-up cafes, open courts, swims and hikes, so it's easy to show up and meet people.\n\n" +
         "3 quick questions. first: what are you into? (e.g. pickleball, coffee pop-ups, hiking, yoga)\n\nReply STOP anytime.");
     }
     if (up === "STOP") { u.stopped = true; this.save(); return this.transport.dm(u.id, "you're unsubscribed. text START to come back."); }
@@ -144,7 +144,7 @@ export class HuddleBot {
     const lines = picks.map((p, i) =>
       `${i + 1}. ${p.event.emoji} ${p.event.title}\n   ${when(p.event.start)} · ${p.event.neighborhood} · ${price(p.event.cost)} · ${p.event.going} going`);
     return this.say(u,
-      `🗓 your week near ${(u.profile.areas?.length ? u.profile.areas : u.profile.home ? [u.profile.home] : []).map((a) => a.label).join(" + ") || "you"} (sample events)\n\n${lines.join("\n\n")}\n\n` +
+      `🍳 what's cooking near ${(u.profile.areas?.length ? u.profile.areas : u.profile.home ? [u.profile.home] : []).map((a) => a.label).join(" + ") || "you"} this week (sample events)\n\n${lines.join("\n\n")}\n\n` +
       `reply a number to join (like 1), INFO 2 for details, or MORE.`);
   }
 

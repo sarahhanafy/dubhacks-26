@@ -1,6 +1,6 @@
 <!doctype html>
 <html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"></head><body>
-<title>Huddle App Demo</title>
+<title>What's Cooking</title>
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Nunito:wght@400;600;700;800;900&display=swap">
@@ -29,7 +29,7 @@ button { font: inherit; color: inherit; }
 @media (max-width: 820px) { .stage { grid-template-columns: auto; } .rail { display: none; } }
 
 .rail { display: grid; gap: 26px; }
-.brand { font: italic 64px/0.9 var(--display); letter-spacing: -.02em; } .brand span { color: var(--accent); }
+.brand { font: italic 58px/0.92 var(--display); letter-spacing: -.02em; } .brand span { color: var(--accent); display: block; }
 .tag { color: var(--muted); font-size: 16px; line-height: 1.55; max-width: 30ch; margin-top: 12px; }
 .steps { list-style: none; margin: 0; padding: 0; display: grid; gap: 4px; }
 .steps button { all: unset; cursor: pointer; display: grid; grid-template-columns: 28px 1fr; gap: 12px; align-items: center; padding: 10px 12px; border-radius: 16px; color: var(--muted); font-weight: 700; font-size: 15px; transition: background .25s, color .25s; }
@@ -152,7 +152,7 @@ canvas.confetti { position: absolute; inset: 0; z-index: 45; pointer-events: non
 
 <div class="stage">
   <aside class="rail">
-    <div><div class="brand">huddle<span>.</span></div>
+    <div><div class="brand">what's <span>cooking</span></div>
       <div class="tag">every week, a few things happening near you. tap to show up, keep showing up, find your people.</div></div>
     <ol class="steps" id="steps"></ol>
     <div class="fine">Live demo running our real ranking engine. Events, hosts and attendee counts are sample data for the week of Oct 18, 2026.</div>
@@ -218,7 +218,7 @@ function onboarding(step) {
   rail(0);
   const dots = `<div class="dots">${[0,1,2].map((i) => `<i class="${i <= step ? "on" : ""}"></i>`).join("")}</div>`;
   let body = "";
-  if (step === 0) body = `<div class="rise"><div class="kicker">welcome to huddle</div><h1>what are you <em>into?</em></h1></div>
+  if (step === 0) body = `<div class="rise"><div class="kicker">welcome to what's cooking 🍳</div><h1>what are you <em>into?</em></h1></div>
     <div class="chipset">${CATS.map(([c, e, l]) => `<button class="pick ${S.profile.interests.includes(c) ? "on" : ""}" data-c="${c}">${e} ${l}</button>`).join("")}</div>`;
   if (step === 1) body = `<div class="rise"><div class="kicker">pick as many as you like</div><h1>where do you <em>hang out?</em></h1></div>
     <div class="chipset">${HOODS.map((h) => `<button class="pick ${areasOf(S.profile).some((a) => a.label === h) ? "on" : ""}" data-h="${h}">📍 ${h}</button>`).join("")}</div>`;
@@ -376,7 +376,7 @@ function openSheet(id) {
     <div style="font-size:14px;line-height:1.55;color:#5e5750">${e.blurb}</div>
     <div class="people"><div class="avs">${avs}</div><span id="cnt">${e.going} going · ${e.capacity - e.going} spots left</span></div>
     <div class="bar"><i id="fill" style="width:${(e.going / e.capacity) * 100}%"></i></div>
-    ${e.recurring ? `<div class="regular">🔁 Happens <b>${e.recurring}</b>. Come three times and you're a regular. Huddle can save your spot each week.</div>` : ""}
+    ${e.recurring ? `<div class="regular">🔁 Happens <b>${e.recurring}</b>. Come three times and you're a regular. We can save your spot each week.</div>` : ""}
     ${p?.reasons?.length ? `<div class="kicker">why it's for you: ${p.reasons.join(" · ")}</div>` : ""}
     <div class="row"><button class="ghost" id="share">↗ invite</button><button class="cta" id="join"></button></div>
   </div>`);
@@ -415,17 +415,17 @@ function week() {
 // ------------------------------------------------------------ 6. the weekly iMessage
 const esc = (t) => t.replace(/&/g, "&amp;").replace(/</g, "&lt;");
 function digestText(picks) {
-  return `🗓 your week near ${whereLabel()} (sample events)\n\n` +
+  return `🍳 what's cooking near ${whereLabel()} this week (sample events)\n\n` +
     picks.map((p, i) => `${i + 1}. ${p.event.emoji} ${p.event.title}\n   ${dayShort(p.event.start)} ${time(p.event.start)} · ${p.event.neighborhood} · ${price(p.event.cost)} · ${p.event.going} going`).join("\n\n") +
     "\n\nreply a number to join (like 1), INFO 2 for details, or MORE.";
 }
 function texts() {
   rail(5);
   if (!S.texts) { const picks = forYou(); S.texts = { list: picks.map((p) => p.event.id), msgs: [["ts", "Sunday 9:00 AM"], ["them", "good morning ☀️ here's your week:"], ["them", digestText(picks)]] }; }
-  screen(`<div class="imsg"><div class="imsg-head"><div class="av">h</div><span>Huddle</span></div>
+  screen(`<div class="imsg"><div class="imsg-head"><div class="av">🍳</div><span>What's Cooking</span></div>
     <div class="thread" id="th">${S.texts.msgs.map(([w, t]) => w === "ts" ? `<div class="ts">${t}</div>` : `<div class="b ${w}">${esc(t)}</div>`).join("")}</div></div>
     <div class="quick" id="quick">${["1","INFO 2","MORE","something outdoorsy","MY"].map((q) => `<button type="button">${q}</button>`).join("")}</div>
-    <form class="compose" id="cf"><input id="ci" placeholder="iMessage" autocomplete="off" aria-label="Message Huddle"><button aria-label="Send">↑</button></form>${tabs()}`);
+    <form class="compose" id="cf"><input id="ci" placeholder="iMessage" autocomplete="off" aria-label="Message What's Cooking"><button aria-label="Send">↑</button></form>${tabs()}`);
   bindTabs();
   const th = $("#th"); th.scrollTop = th.scrollHeight;
   const add = (w, t) => { S.texts.msgs.push([w, t]); th.insertAdjacentHTML("beforeend", `<div class="b ${w}">${esc(t)}</div>`); th.scrollTop = th.scrollHeight; };

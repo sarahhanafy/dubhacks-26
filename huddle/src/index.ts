@@ -1,9 +1,9 @@
 import { Spectrum } from "spectrum-ts";
 import { imessage } from "@spectrum-ts/imessage";
-import { HuddleBot, type Transport } from "./bot.js";
+import { CookingBot, type Transport } from "./bot.js";
 import { parseProfileWithGemini } from "./llm.js";
 
-// Anyone who texts the Huddle number is onboarded (texting first = opt-in).
+// Anyone who texts the What's Cooking number is onboarded (texting first = opt-in).
 // On Photon's shared plan, their number must also be added as a project user in the dashboard.
 
 const app = await Spectrum({
@@ -22,27 +22,27 @@ const transport: Transport = {
       let space = spaces.get(userId);
       if (!space) { space = await im.space.create(await im.user(userId)); spaces.set(userId, space); }
       await space.send(text);
-      console.log(`[huddle] → …${userId.slice(-4)}: ${text.split("\n")[0]}`);
+      console.log(`[whats-cooking] → …${userId.slice(-4)}: ${text.split("\n")[0]}`);
     } catch (e) {
-      console.error(`[huddle] send to …${userId.slice(-4)} failed:`, (e as Error).message);
+      console.error(`[whats-cooking] send to …${userId.slice(-4)} failed:`, (e as Error).message);
     }
   },
 };
 
-const bot = new HuddleBot(transport, () => new Date(), parseProfileWithGemini, "data/huddle.json");
-setInterval(() => bot.tick().catch((e) => console.error("[huddle] tick", e)), 60_000);
-console.log(`[huddle] ready · ${bot.users.size} saved users · Gemini ${process.env.GEMINI_API_KEY ? "on" : "off (rule parser)"}`);
+const bot = new CookingBot(transport, () => new Date(), parseProfileWithGemini, "data/huddle.json");
+setInterval(() => bot.tick().catch((e) => console.error("[whats-cooking] tick", e)), 60_000);
+console.log(`[whats-cooking] ready · ${bot.users.size} saved users · Gemini ${process.env.GEMINI_API_KEY ? "on" : "off (rule parser)"}`);
 
 for await (const [space, message] of app.messages) {
   if (message.direction === "outbound") continue;
   if (message.content.type !== "text" || !message.sender) continue;
   const from = norm(message.sender.id);
   spaces.set(from, space); // reply in the thread they texted from
-  console.log(`[huddle] ← …${from.slice(-4)}: ${message.content.text}`);
+  console.log(`[whats-cooking] ← …${from.slice(-4)}: ${message.content.text}`);
   try {
     await bot.handle(from, message.content.text);
   } catch (e) {
-    console.error("[huddle] handler error", e);
+    console.error("[whats-cooking] handler error", e);
     await space.send("sorry, something broke on my end. try again, or text HELP.");
   }
 }

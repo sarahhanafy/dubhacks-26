@@ -1,6 +1,6 @@
-# Huddle
+# What's Cooking 🍳
 
-Every week, Huddle texts you a few things happening near you, like pop-up cafés, open pickleball courts, swim meetups and group hikes. Reply with a number to join. The app shows the same events on a map and in a list, so it's easy to show up, keep showing up, and become a regular.
+Every week, What's Cooking texts you a few things happening near you, like pop-up cafés, open pickleball courts, swim meetups and group hikes. Reply with a number to join. The app shows the same events on a map and in a list, so it's easy to show up, keep showing up, and become a regular.
 
 Built at DubHacks 2026 (Community Kitchen track) with Photon iMessage.
 
@@ -10,13 +10,13 @@ Built at DubHacks 2026 (Community Kitchen track) with Photon iMessage.
 
 **iMessage bot:**
 ```bash
-cd huddle
+cd huddle   # the iMessage bot lives in this folder
 npm install
 # .env needs PROJECT_ID and PROJECT_SECRET from the Photon dashboard (optional: GEMINI_API_KEY)
 npm run dev        # live over iMessage
 npm run sim        # offline rehearsal of a full conversation
 ```
-Text the project's number "hi". Huddle asks 3 quick questions (interests, neighborhood, when you're free and budget), then texts back 5 events near you. Commands: `1` to join · `INFO 2` · `MORE` · `MY` · `LEAVE` · `PREFS` · `STOP`, or text a mood like "something outdoorsy". It sends a digest every Sunday morning and a reminder 2 hours before anything you joined.
+Text the project's number "hi". What's Cooking asks 3 quick questions (interests, neighborhood, when you're free and budget), then texts back 5 events near you. Commands: `1` to join · `INFO 2` · `MORE` · `MY` · `LEAVE` · `PREFS` · `STOP`, or text a mood like "something outdoorsy". It sends a digest every Sunday morning and a reminder 2 hours before anything you joined.
 
 ## How it works
 

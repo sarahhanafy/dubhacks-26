@@ -43,7 +43,7 @@ export async function parseProfileWithGemini(answer: string): Promise<Partial<Pr
     if (Array.isArray(out.when) && out.when.length) p.when = out.when;
     return p;
   } catch (e) {
-    console.warn("[huddle] Gemini unavailable, using rule parser:", (e as Error).message);
+    console.warn("[whats-cooking] Gemini unavailable, using rule parser:", (e as Error).message);
     return {};
   }
 }
