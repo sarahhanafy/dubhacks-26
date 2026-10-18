@@ -10,6 +10,7 @@ await say("hi");
 await say("pickleball, coffee pop ups and hiking");
 await say("capitol hill and ballard");
 await say("weekends and weeknights, under $15");
+await say("step free please, I use a wheelchair");
 await say("INFO 1");
 await say("1");
 await say("MORE");

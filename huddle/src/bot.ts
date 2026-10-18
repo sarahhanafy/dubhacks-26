@@ -2,14 +2,14 @@
 // Transport-agnostic so it can be tested with a fake (see sim.ts).
 
 import { readFileSync, writeFileSync, mkdirSync } from "node:fs";
-import { rankEvents, parseAreas, parseBudget, parseInterests, parseWhen, type Pick, type Profile } from "../../src/domain/discovery.js";
-import { EVENTS, type CommunityEvent } from "../../src/events/seattle.js";
+import { rankEvents, parseAreas, parseBudget, parseInterests, parseNeeds, parseWhen, type Pick, type Profile } from "../../src/domain/discovery.js";
+import { ACCESS_LABEL, EVENTS, type CommunityEvent } from "../../src/events/seattle.js";
 import { createHostedEvent, parseHostText, type HostInput } from "../../src/domain/hosting.js";
 
 export interface Transport { dm(userId: string, text: string): Promise<void> }
 export type ProfileParser = (answer: string) => Promise<Partial<Profile>>;
 
-type Step = "interests" | "area" | "when" | "ready";
+type Step = "interests" | "area" | "when" | "needs" | "ready";
 interface UserState {
   id: string;
   step: Step;
@@ -81,7 +81,7 @@ export class CookingBot {
       this.save();
       return this.say(u,
         "hey! this is what's cooking 🍳 every week I'll text you a few things happening near you, like pop-up cafes, open courts, swims and hikes, so it's easy to show up and meet people.\n\n" +
-        "3 quick questions. first: what are you into? (e.g. pickleball, coffee pop-ups, hiking, yoga)\n\nReply STOP anytime.");
+        "a few quick questions. first: what are you into? (e.g. pickleball, coffee pop-ups, hiking, yoga)\n\nReply STOP anytime.");
     }
     if (up === "STOP") { u.stopped = true; this.save(); return this.transport.dm(u.id, "you're unsubscribed. text START to come back."); }
     if (up === "START") { u.stopped = false; this.save(); return this.say(u, "welcome back! text EVENTS for this week's picks."); }
@@ -134,14 +134,21 @@ export class CookingBot {
       u.profile.maxDistanceKm = 8;
       u.step = "when";
       this.save();
-      return this.say(u, `got it: ${areas.map((a) => a.label).join(", ")}. last one: when are you usually free, and any budget? (e.g. "weekends and weeknights, under $15")`);
+      return this.say(u, `got it: ${areas.map((a) => a.label).join(", ")}. when are you usually free, and any budget? (e.g. "weekends and weeknights, under $15")`);
     }
     if (u.step === "when") {
       u.profile.when = llm.when ?? parseWhen(text);
       u.profile.maxBudget = llm.maxBudget ?? parseBudget(text);
+      u.step = "needs";
+      this.save();
+      return this.say(u, "last one: anything that'd make it easier to show up? like step-free / wheelchair access, quiet or sensory-friendly, or kid-friendly. or just say none.");
+    }
+    if (u.step === "needs") {
+      u.profile.needs = parseNeeds(text);
       u.step = "ready";
       this.save();
-      await this.say(u, "you're all set ✨ I'll text you every Sunday morning. here's what's happening this week:");
+      const n = u.profile.needs.length ? ` I'll only send things that are ${u.profile.needs.map((x) => ACCESS_LABEL[x]).join(" + ")}.` : "";
+      await this.say(u, `you're all set ✨${n} I'll text you every Sunday morning. here's what's happening this week:`);
       return this.digest(u, true);
     }
   }
@@ -162,7 +169,7 @@ export class CookingBot {
     u.lastDigestWeek = weekKey(this.clock());
     this.save();
     const lines = picks.map((p, i) =>
-      `${i + 1}. ${p.event.emoji} ${p.event.title}\n   ${when(p.event.start)} · ${p.event.neighborhood} · ${price(p.event.cost)} · ${p.event.going} going`);
+      `${i + 1}. ${p.event.emoji} ${p.event.title}${p.event.access?.length ? " " + p.event.access.map((a) => ACCESS_LABEL[a].split(" ")[0]).join("") : ""}\n   ${when(p.event.start)} · ${p.event.neighborhood} · ${price(p.event.cost)} · ${p.event.going} going`);
     return this.say(u,
       `🍳 what's cooking near ${(u.profile.areas?.length ? u.profile.areas : u.profile.home ? [u.profile.home] : []).map((a) => a.label).join(" + ") || "you"} this week (sample events)\n\n${lines.join("\n\n")}\n\n` +
       `reply a number to join (like 1), INFO 2 for details, or MORE.`);
@@ -178,7 +185,8 @@ export class CookingBot {
     if (!ev) return this.say(u, "that number isn't on your list. text EVENTS to see it again.");
     return this.say(u,
       `${ev.emoji} ${ev.title}\n${longWhen(ev.start)} – ${fmt(ev.end, { hour: "numeric", minute: "2-digit" })}\n📍 ${ev.place}, ${ev.neighborhood}\n` +
-      `${price(ev.cost)} · ${ev.going}/${ev.capacity} going${ev.beginnerFriendly ? " · beginner-friendly" : ""}${ev.recurring ? ` · ${ev.recurring}` : ""}\n\n` +
+      `${price(ev.cost)} · ${ev.going}/${ev.capacity} going${ev.beginnerFriendly ? " · beginner-friendly" : ""}${ev.recurring ? ` · ${ev.recurring}` : ""}\n` +
+      `${ev.access?.length ? ev.access.map((a) => ACCESS_LABEL[a]).join(" · ") : "no access info yet, ask the host"}\n\n` +
       `${ev.blurb}\nhosted by ${ev.host}${ev.isSample ? " (sample)" : ""}` +
       (ev.potluck ? `\n🥘 bringing so far: ${ev.bringing?.length ? ev.bringing.join(", ") : "nothing yet, be the first!"}` : "") +
       `\n\nreply ${i + 1} to join.`);
@@ -272,7 +280,7 @@ export class CookingBot {
   }
 
   help() {
-    return "EVENTS: this week's picks · MORE: more picks · 1, 2, 3…: join · INFO 2: details · MY: your plans · LEAVE: drop out · PREFS: change interests · STOP: unsubscribe\n\nHOST taco potluck sat 6pm cal anderson: host your own · BRING <dish>: for potlucks\n\nor just text a mood, like \"something outdoorsy\".";
+    return "EVENTS: this week's picks · MORE: more picks · 1, 2, 3…: join · INFO 2: details · MY: your plans · LEAVE: drop out · PREFS: change interests & access needs · STOP: unsubscribe\n\nHOST taco potluck sat 6pm cal anderson: host your own · BRING <dish>: for potlucks\n\nor just text a mood, like \"something outdoorsy\".";
   }
 
   // ---------------------------------------------------------------- scheduled

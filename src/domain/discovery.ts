@@ -1,7 +1,7 @@
 // Deterministic event discovery: hard filters first, then a transparent score.
 // The LLM never decides what's eligible; it can only help phrase the result.
 
-import { AREAS, type Category, type CommunityEvent } from "../events/seattle.js";
+import { ACCESS_LABEL, AREAS, type Access, type Category, type CommunityEvent } from "../events/seattle.js";
 
 export interface Area { lat: number; lng: number; label: string }
 
@@ -16,6 +16,8 @@ export interface Profile {
   /** When they're usually free. Empty = any time. */
   when: ("weekday_mornings" | "weekday_evenings" | "weekends")[];
   beginnerOnly?: boolean;
+  /** Access needs. Hard filter: we never suggest an event that doesn't meet every one. */
+  needs?: Access[];
 }
 
 export interface Pick {
@@ -71,6 +73,7 @@ export function rankEvents(events: CommunityEvent[], profile: Profile, now: Date
     if (ev.going >= ev.capacity) continue;
     if (profile.maxBudget !== undefined && ev.cost > profile.maxBudget) continue;
     if (profile.beginnerOnly && !ev.beginnerFriendly) continue;
+    if (profile.needs?.some((n) => !(ev.access ?? []).includes(n))) continue;
     const slot = slotOf(ev.start);
     if (profile.when.length && !profile.when.includes(slot as Profile["when"][number])) continue;
     const near = nearestArea(profile, ev);
@@ -78,7 +81,7 @@ export function rankEvents(events: CommunityEvent[], profile: Profile, now: Date
     if (dist !== undefined && profile.maxDistanceKm !== undefined && dist > profile.maxDistanceKm) continue;
 
     // ---- score (higher is better)
-    const reasons: string[] = [];
+    const reasons: string[] = (profile.needs ?? []).map((n) => ACCESS_LABEL[n]);
     let score = 0;
     if (profile.interests.includes(ev.category)) { score += 3; reasons.push(`you're into ${ev.category}`); }
     if (dist !== undefined) {
@@ -161,4 +164,14 @@ export function parseBudget(text: string): number | undefined {
   if (m) return +m[1]!;
   if (/\bfree\b/i.test(text)) return 0;
   return undefined;
+}
+
+export function parseNeeds(text: string): Access[] {
+  const t = text.toLowerCase();
+  if (/^\s*(no|none|nope|nah|nothing|all good|n\/a)\b/.test(t)) return [];
+  const out: Access[] = [];
+  if (/wheelchair|step[- ]?free|no stairs|accessib|mobility|cane|walker|ramp/.test(t)) out.push("step_free");
+  if (/quiet|sensory|autis|overstimulat|low[- ]key|calm|anxi|loud/.test(t)) out.push("sensory_friendly");
+  if (/kid|child|toddler|baby|stroller|family|families/.test(t)) out.push("kid_friendly");
+  return out;
 }

@@ -214,7 +214,7 @@ canvas.confetti { position: absolute; inset: 0; z-index: 45; pointer-events: non
 
 <script>/*CORE*/</script>
 <script>
-const { rankEvents, nearestArea, areasOf, createHostedEvent, parseHostText, zonedToUtc, EVENTS, AREAS } = Core;
+const { rankEvents, nearestArea, areasOf, createHostedEvent, parseHostText, zonedToUtc, EVENTS, AREAS, ACCESS_LABEL } = Core;
 const NOW = new Date("2026-10-18T05:00:00.000Z"); // demo "now": Sat Oct 17, 10 PM PT
 const TZ = "America/Los_Angeles";
 const $ = (s, r = document) => r.querySelector(s);
@@ -225,12 +225,14 @@ const price = (n) => (n === 0 ? "free" : "$" + n);
 const CATS = [["cafe","☕","cafés & pop-ups"],["sports","🏓","sports"],["swim","🏊","swimming"],["outdoors","🥾","outdoors"],["music","🎸","music"],["food","🥟","food"],["art","🎨","art"],["wellness","🧘","wellness"],["community","🌻","community"]];
 const HOODS = ["Capitol Hill","U District","Ballard","Fremont","Queen Anne","West Seattle","Bellevue","Redmond"];
 const WHEN = [["weekends","weekends"],["weekday_evenings","weeknights"],["weekday_mornings","mornings"]];
+const NEEDS = [["step_free","♿ step-free / wheelchair"],["sensory_friendly","🤫 quiet / sensory-friendly"],["kid_friendly","👶 kid-friendly"]];
+const accessIcons = (e) => (e.access ?? []).map((a) => ACCESS_LABEL[a].split(" ")[0]).join("");
 const BUDGETS = [[0,"free only"],[10,"under $10"],[20,"under $20"],[undefined,"any"]];
 const AVC = ["#f7dbe0","#dbe8d6","#f6e6d3","#dcebf4","#e9e0f4","#f6edd2"];
 
 let S;
 function reset() {
-  S = { events: JSON.parse(JSON.stringify(EVENTS)), profile: { interests: ["cafe","sports","outdoors"], areas: [AREAS["capitol hill"]], maxBudget: 20, maxDistanceKm: 8, when: [] },
+  S = { events: JSON.parse(JSON.stringify(EVENTS)), profile: { interests: ["cafe","sports","outdoors"], areas: [AREAS["capitol hill"]], maxBudget: 20, maxDistanceKm: 8, when: [], needs: [] },
         joined: new Set(), tab: "discover", view: "map", filter: "for-you", texts: null, view0: null };
 }
 reset();
@@ -271,7 +273,10 @@ function onboarding(step) {
   if (step === 2) body = `<div class="rise"><div class="kicker">last one</div><h1>when are you <em>free?</em></h1></div>
     <div class="chipset">${WHEN.map(([w, l]) => `<button class="pick ${S.profile.when.includes(w) ? "on" : ""}" data-w="${w}">${l}</button>`).join("")}</div>
     <div class="label">budget per event</div>
-    <div class="chipset">${BUDGETS.map(([b, l], i) => `<button class="pick ${S.profile.maxBudget === b ? "on" : ""}" data-b="${i}">${l}</button>`).join("")}</div>`;
+    <div class="chipset">${BUDGETS.map(([b, l], i) => `<button class="pick ${S.profile.maxBudget === b ? "on" : ""}" data-b="${i}">${l}</button>`).join("")}</div>
+    <div class="label">anything that makes it easier to show up?</div>
+    <div class="chipset">${NEEDS.map(([n, l]) => `<button class="pick ${S.profile.needs.includes(n) ? "on" : ""}" data-n="${n}">${l}</button>`).join("")}</div>
+    <div class="kicker">we'll only show events that work for you.</div>`;
   screen(`<div class="onb">${dots}${body}<div style="flex:1"></div>
     <button class="cta" id="next">${step < 2 ? "next →" : "show me my week →"}</button></div>`);
   $(".onb").addEventListener("click", (e) => {
@@ -280,6 +285,7 @@ function onboarding(step) {
     if (b.dataset.h) { const a = AREAS[b.dataset.h.toLowerCase()], cur = areasOf(S.profile), has = cur.some((x) => x.label === a.label);
       S.profile.areas = has ? cur.filter((x) => x.label !== a.label) : [...cur, a]; S.profile.home = undefined; b.classList.toggle("on", !has); }
     if (b.dataset.w) { const set = new Set(S.profile.when); set.has(b.dataset.w) ? set.delete(b.dataset.w) : set.add(b.dataset.w); S.profile.when = [...set]; b.classList.toggle("on"); }
+    if (b.dataset.n) { const set = new Set(S.profile.needs); set.has(b.dataset.n) ? set.delete(b.dataset.n) : set.add(b.dataset.n); S.profile.needs = [...set]; b.classList.toggle("on"); }
     if (b.dataset.b) { S.profile.maxBudget = BUDGETS[+b.dataset.b][0]; document.querySelectorAll("[data-b]").forEach((x) => x.classList.toggle("on", x === b)); }
     $("#next").disabled = step === 0 && !S.profile.interests.length;
   });
@@ -327,7 +333,7 @@ function card(p, i) {
   const e = p.event, d = p.distanceKm;
   return `<button class="ev" data-id="${e.id}" style="animation-delay:${i * .05}s">
     <div class="tile c-${e.category}">${e.emoji}</div>
-    <div style="min-width:0"><h3>${e.title}</h3>
+    <div style="min-width:0"><h3>${e.title}${accessIcons(e) ? ` <span style="font-size:13px" title="${(e.access ?? []).map((a) => ACCESS_LABEL[a]).join(", ")}">${accessIcons(e)}</span>` : ""}</h3>
       <div class="meta">${dayShort(e.start)} ${time(e.start)} · ${e.neighborhood}${d != null ? ` · ${d.toFixed(1)} km` : ""} · ${price(e.cost)}</div>
       <div class="why">${S.joined.has(e.id) ? "✓ you're going" : `${e.going} going${p.reasons.length ? " · " + p.reasons.slice(0, 2).join(" · ") : ""}`}</div></div></button>`;
 }
@@ -419,7 +425,8 @@ function openSheet(id) {
     <div class="facts">
       <div>🗓 ${fmt(e.start, { weekday: "long", month: "short", day: "numeric" })} · ${time(e.start)} – ${time(e.end)}</div>
       <div>📍 ${e.place}, ${e.neighborhood}${d != null ? ` <span>· ${d.toFixed(1)} km from ${nearLabel(e)}</span>` : ""}</div>
-      <div>💸 ${price(e.cost)}${e.beginnerFriendly ? " <span>· beginner-friendly</span>" : ""}</div></div>
+      <div>💸 ${price(e.cost)}${e.beginnerFriendly ? " <span>· beginner-friendly</span>" : ""}</div>
+      <div>${e.access?.length ? e.access.map((a) => ACCESS_LABEL[a]).join(" · ") : "<span>no access info yet, ask the host</span>"}</div></div>
     <div style="font-size:14px;line-height:1.55;color:#5e5750">${e.blurb}</div>
     <div class="people"><div class="avs">${avs}</div><span id="cnt">${e.going} going · ${e.capacity - e.going} spots left</span></div>
     <div class="bar"><i id="fill" style="width:${(e.going / e.capacity) * 100}%"></i></div>
@@ -462,7 +469,7 @@ function weekDays() { // the 7 days after "now", in Pacific time
 }
 function openHost() {
   rail(4);
-  const H = { title: "", type: "potluck", day: null, hour: null, hood: areasOf(S.profile)[0]?.label ?? "Capitol Hill" };
+  const H = { title: "", type: "potluck", day: null, hour: null, access: new Set(), hood: areasOf(S.profile)[0]?.label ?? "Capitol Hill" };
   const days = weekDays();
   closeSheet(true);
   $("#phone").insertAdjacentHTML("beforeend", `<div class="scrim" id="scrim"></div><div class="sheet" role="dialog" aria-label="Host something">
@@ -473,6 +480,8 @@ function openHost() {
     <div class="label">when</div>
     <div class="chipset sm" id="hday">${days.map((d, i) => `<button class="pick" data-i="${i}">${d.label}</button>`).join("")}</div>
     <div class="chipset sm" id="htime">${HOST_TIMES.map(([h, l]) => `<button class="pick" data-h="${h}">${l}</button>`).join("")}</div>
+    <div class="label">is it…</div>
+    <div class="chipset sm" id="hacc">${NEEDS.map(([n, l]) => `<button class="pick" data-n="${n}">${l.split(" / ")[0]}</button>`).join("")}</div>
     <div class="label">where</div>
     <div class="chipset sm" id="hhood">${HOODS.map((h) => `<button class="pick ${H.hood === h ? "on" : ""}" data-h="${h}">📍 ${h}</button>`).join("")}</div>
     <button class="cta" id="post" disabled>post it 🍳</button>
@@ -484,12 +493,13 @@ function openHost() {
   $("#htype").onclick = (x) => { const b = x.target.closest(".pick"); if (!b) return; H.type = b.dataset.k; one($("#htype"), b); };
   $("#hday").onclick = (x) => { const b = x.target.closest(".pick"); if (!b) return; H.day = +b.dataset.i; one($("#hday"), b); ok(); };
   $("#htime").onclick = (x) => { const b = x.target.closest(".pick"); if (!b) return; H.hour = +b.dataset.h; one($("#htime"), b); ok(); };
+  $("#hacc").onclick = (x) => { const b = x.target.closest(".pick"); if (!b) return; H.access.has(b.dataset.n) ? H.access.delete(b.dataset.n) : H.access.add(b.dataset.n); b.classList.toggle("on"); };
   $("#hhood").onclick = (x) => { const b = x.target.closest(".pick"); if (!b) return; H.hood = b.dataset.h; one($("#hhood"), b); ok(); };
   $("#scrim").onclick = () => closeSheet(); $("#x").onclick = () => closeSheet();
   $("#post").onclick = async () => {
     const d = days[H.day], a = AREAS[H.hood.toLowerCase()], t = HOST_TYPES.find((x) => x[0] === H.type);
     const input = { title: H.title.trim(), start: zonedToUtc(d.y, d.m, d.d, H.hour, 0, TZ).toISOString(), place: `near ${H.hood}`, neighborhood: H.hood,
-      lat: a.lat + (Math.random() - .5) * .004, lng: a.lng + (Math.random() - .5) * .006, potluck: H.type === "potluck", category: t[2], hostName: "you" };
+      lat: a.lat + (Math.random() - .5) * .004, lng: a.lng + (Math.random() - .5) * .006, potluck: H.type === "potluck", category: t[2], hostName: "you", access: [...H.access] };
     let e = createHostedEvent(input);
     if (S.live && !S.reel) { const r = await api("/api/host", input); if (r?.event) e = r.event; }
     S.events = S.events.filter((x) => x.id !== e.id).concat(e); S.joined.add(e.id); S.fresh = e.id;
@@ -548,7 +558,7 @@ function week() {
 const esc = (t) => t.replace(/&/g, "&amp;").replace(/</g, "&lt;");
 function digestText(picks) {
   return `🍳 what's cooking near ${whereLabel()} this week (sample events)\n\n` +
-    picks.map((p, i) => `${i + 1}. ${p.event.emoji} ${p.event.title}\n   ${dayShort(p.event.start)} ${time(p.event.start)} · ${p.event.neighborhood} · ${price(p.event.cost)} · ${p.event.going} going`).join("\n\n") +
+    picks.map((p, i) => `${i + 1}. ${p.event.emoji} ${p.event.title}${accessIcons(p.event) ? " " + accessIcons(p.event) : ""}\n   ${dayShort(p.event.start)} ${time(p.event.start)} · ${p.event.neighborhood} · ${price(p.event.cost)} · ${p.event.going} going`).join("\n\n") +
     "\n\nreply a number to join (like 1), INFO 2 for details, or MORE.";
 }
 function texts() {
@@ -638,8 +648,8 @@ async function playReel() {
   caption("step 2", "pick every spot you <em>hang out</em>", "distance is measured from whichever spot is closest.");
   for (const h of ["Capitol Hill", "Ballard", "Bellevue"]) { await tap(`[data-h="${h}"]`, 300); if (!live()) return; }
   await tap("#next", 700);
-  caption("step 3", "when you're free, and your <em>budget</em>");
-  await tap('[data-w="weekends"]', 250); await tap('[data-w="weekday_evenings"]', 250); await tap('[data-b="2"]', 400);
+  caption("step 3", "when you're free, and what you <em>need</em>", "access needs are a hard filter: you'll never get sent somewhere you can't get into.");
+  await tap('[data-w="weekends"]', 250); await tap('[data-w="weekday_evenings"]', 250); await tap('[data-b="2"]', 350); await tap('[data-n="step_free"]', 600);
   await tap("#next", 1300); if (!live()) return;
 
   caption("discover", "everything happening <em>near you</em>", "a hand-drawn map of Seattle with this week's picks.");
@@ -655,7 +665,7 @@ async function playReel() {
   caption("browse", "or scroll the <em>list</em>", "filter by what you're in the mood for.");
   await tap('[data-v="list"]', 900);
   await smoothScroll($(".list"), 320, 1300); await wait(300); await smoothScroll($(".list"), 0, 800);
-  await tap('[data-f="outdoors"]', 1100); if (!live()) return;
+  await tap('[data-f="cafe"]', 1100); if (!live()) return;
   const second = $(".list .ev:not(:first-child)") || $(".list .ev");
   if (second) { await tap(second, 1300); await tap("#join", 1800); await tap("#x", 600); }
   if (!live()) return;
@@ -664,7 +674,7 @@ async function playReel() {
   await tap('[data-f="for-you"]', 500); await tap('[data-v="map"]', 900);
   await tap("#hostbtn", 900); if (!live()) return;
   await typeInto("#ht", "sunday taco potluck"); $("#ht").dispatchEvent(new Event("input")); await wait(300);
-  await tap('#htype [data-k="potluck"]', 350); await tap('#hday [data-i="0"]', 350); await tap('#htime [data-h="18"]', 350);
+  await tap('#htype [data-k="potluck"]', 350); await tap('#hday [data-i="0"]', 350); await tap('#htime [data-h="18"]', 350); await tap('#hacc [data-n="step_free"]', 350); await tap('#hacc [data-n="kid_friendly"]', 350);
   await tap('#hhood [data-h="Capitol Hill"]', 450);
   await tap("#post", 2200); if (!live()) return;
   const mine = S.events.find((e) => e.id === S.fresh), mpin = document.querySelector(`.pin[data-id="${S.fresh}"]`);
@@ -677,7 +687,7 @@ async function playReel() {
 
   caption("the weekly text", "every sunday, <em>right in iMessage</em>", "powered by Photon. reply a number to join, or just text a mood.");
   await tap('[data-t="texts"]', 1800);
-  await typeInto("#ci", "something outdoorsy"); await tap("#cf button", 2200, () => $("#cf").requestSubmit()); if (!live()) return;
+  await typeInto("#ci", "something with coffee"); await tap("#cf button", 2200, () => $("#cf").requestSubmit()); if (!live()) return;
   await smoothScroll($("#th"), $("#th").scrollHeight, 900);
   await typeInto("#ci", "3"); await tap("#cf button", 2400, () => $("#cf").requestSubmit()); if (!live()) return;
   await smoothScroll($("#th"), $("#th").scrollHeight, 900); await wait(1200);

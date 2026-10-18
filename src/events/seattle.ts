@@ -2,6 +2,9 @@
 // Places are real Seattle-area parks and neighborhoods; hosts and events are illustrative
 // and labeled as sample data everywhere they appear.
 
+export type Access = "step_free" | "sensory_friendly" | "kid_friendly";
+export const ACCESS_LABEL: Record<Access, string> = { step_free: "♿ step-free", sensory_friendly: "🤫 sensory-friendly", kid_friendly: "👶 kid-friendly" };
+
 export type Category = "cafe" | "sports" | "swim" | "outdoors" | "music" | "food" | "art" | "wellness" | "community";
 
 export interface CommunityEvent {
@@ -23,6 +26,8 @@ export interface CommunityEvent {
   recurring?: string; // e.g. "every Sunday"
   blurb: string;
   isSample: boolean;
+  /** Accessibility info shown on every event and used as a hard filter. */
+  access: Access[];
   /** Posted by a neighbor (not an organization). Everyone can host. */
   hostedBy?: "neighbor";
   hostUserId?: string;
@@ -31,7 +36,13 @@ export interface CommunityEvent {
   bringing?: string[];
 }
 
-const e = (x: Omit<CommunityEvent, "isSample">): CommunityEvent => ({ ...x, isSample: true });
+const ACCESS: Record<string, Access[]> = {
+  e01: ["step_free", "kid_friendly"], e02: ["step_free"], e03: ["kid_friendly"], e05: ["step_free"], e07: ["step_free", "kid_friendly"],
+  e08: ["step_free"], e09: ["step_free", "kid_friendly"], e11: ["step_free", "sensory_friendly"], e13: ["step_free", "kid_friendly"],
+  e15: ["step_free"], e16: ["kid_friendly"], e18: ["step_free", "sensory_friendly"], e20: ["step_free", "sensory_friendly"],
+  e23: ["step_free", "kid_friendly", "sensory_friendly"], e24: ["step_free"], e25: ["kid_friendly"],
+};
+const e = (x: Omit<CommunityEvent, "isSample" | "access">): CommunityEvent => ({ ...x, access: ACCESS[x.id] ?? [], isSample: true });
 
 export const EVENTS: CommunityEvent[] = [
   e({ id: "e01", title: "Pop-up pour-over bar", category: "cafe", emoji: "☕", host: "Drift Coffee pop-up", neighborhood: "Capitol Hill", place: "Cal Anderson Park", lat: 47.6170, lng: -122.3191,

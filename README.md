@@ -23,7 +23,7 @@ Text the project's number "hi". What's Cooking asks 3 quick questions (interests
 ## How it works
 
 - `src/events/seattle.ts`: curated **sample** events for the demo week at real Seattle parks and neighborhoods (hosts and counts are illustrative).
-- `src/domain/discovery.ts`: deterministic ranking. Hard filters first (in the future, this week, under budget, within distance, matches when you're free, not full), then a transparent score: your interests, distance, free, beginner-friendly, recurring (easy to become a regular), sooner. At most two picks per category, for variety.
+- `src/domain/discovery.ts`: deterministic ranking. Hard filters first (in the future, this week, under budget, within distance, matches when you're free, not full, and meets every access need: step-free, sensory-friendly, kid-friendly), then a transparent score: your interests, distance, free, beginner-friendly, recurring (easy to become a regular), sooner. At most two picks per category, for variety.
 - `src/domain/hosting.ts`: turns "HOST potluck sat 6pm cal anderson" (or the app's host form) into a neighbor-hosted event; asks for anything missing instead of guessing.
 - `huddle/src/api.ts`: the localhost link the demo app polls.
 - `huddle/src/bot.ts`: the iMessage conversation. Texting first is the opt-in, STOP is immediate, and an optional AI call (OpenRouter or Gemini) only reads your own onboarding answers.

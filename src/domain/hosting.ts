@@ -1,7 +1,7 @@
 // Anyone can host: turn "HOST potluck sat 6pm cal anderson" (or the app's form) into a community event.
 
-import { AREAS, EVENTS, type Category, type CommunityEvent } from "../events/seattle.js";
-import { parseInterests } from "./discovery.js";
+import { AREAS, EVENTS, type Access, type Category, type CommunityEvent } from "../events/seattle.js";
+import { parseInterests, parseNeeds } from "./discovery.js";
 import { zonedToUtc } from "./request.js";
 
 const TZ = "America/Los_Angeles";
@@ -30,6 +30,7 @@ export interface HostInput {
   potluck?: boolean;
   hostName?: string;
   hostUserId?: string;
+  access?: Access[];
 }
 
 export function createHostedEvent(i: HostInput): CommunityEvent {
@@ -43,7 +44,7 @@ export function createHostedEvent(i: HostInput): CommunityEvent {
     potluck, bringing: potluck ? [] : undefined,
     neighborhood: i.neighborhood, place: i.place, lat: i.lat, lng: i.lng,
     start: new Date(start).toISOString(), end: new Date(start + 2 * 3600_000).toISOString(),
-    cost: 0, capacity: potluck ? 15 : 12, going: 1, beginnerFriendly: true, isSample: false,
+    cost: 0, capacity: potluck ? 15 : 12, going: 1, beginnerFriendly: true, isSample: false, access: i.access ?? parseNeeds(i.title),
     blurb: potluck
       ? "Bring a dish to share, or just bring yourself. Reply BRING <dish> after joining so we don't end up with six salads."
       : "Hosted by a neighbor through What's Cooking. All levels welcome, just show up.",
@@ -88,6 +89,8 @@ export function parseHostText(raw: string, now: Date, tz = TZ): ParsedHost {
   let start = zonedToUtc(base.getUTCFullYear(), base.getUTCMonth() + 1, base.getUTCDate(), h, +(tm![2] ?? 0), tz);
   if (start.getTime() < now.getTime()) start = new Date(start.getTime() + 7 * 864e5); // "sat" means the next one
 
-  const pretty = title.replace(/\b\w/, (c) => c.toUpperCase());
-  return { ok: true, input: { title: pretty, start: start.toISOString(), place: spot!.place, neighborhood: spot!.neighborhood, lat: spot!.lat, lng: spot!.lng } };
+  const access = parseNeeds(title);
+  const pretty = title.replace(/\b(wheelchair|step free|accessible|kid friendly|family friendly|quiet|sensory friendly)\b/g, "").replace(/\s+/g, " ").trim()
+    .replace(/\b\w/, (c) => c.toUpperCase());
+  return { ok: true, input: { title: pretty, access, start: start.toISOString(), place: spot!.place, neighborhood: spot!.neighborhood, lat: spot!.lat, lng: spot!.lng } };
 }

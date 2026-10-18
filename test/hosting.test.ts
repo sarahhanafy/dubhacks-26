@@ -6,6 +6,13 @@ import { EVENTS } from "../src/events/seattle.js";
 const NOW = new Date("2026-10-18T05:00:00.000Z"); // Sat Oct 17, 10 PM PT
 
 describe("hosting", () => {
+  it("picks up access info from a texted host request", () => {
+    const r = parseHostText("host kid friendly picnic sun 1pm gas works", NOW);
+    if (!r.ok) throw new Error("parse failed");
+    expect(r.input.access).toEqual(["kid_friendly"]);
+    expect(r.input.title).toBe("Picnic");
+  });
+
   it("parses a texted host request", () => {
     const r = parseHostText("HOST potluck sat 6pm cal anderson", NOW);
     expect(r.ok).toBe(true);

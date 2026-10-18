@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { slotOf, parseArea, parseAreas, parseBudget, parseInterests, parseWhen, rankEvents, type Profile } from "../src/domain/discovery.js";
+import { parseNeeds, slotOf, parseArea, parseAreas, parseBudget, parseInterests, parseWhen, rankEvents, type Profile } from "../src/domain/discovery.js";
 import { EVENTS } from "../src/events/seattle.js";
 
 const NOW = new Date("2026-10-18T05:00:00.000Z"); // Sat Oct 17, 10 PM PT
@@ -65,5 +65,19 @@ describe("onboarding parsers", () => {
     expect(parseWhen("weekends and weeknight evenings")).toEqual(["weekends", "weekday_evenings"]);
     expect(parseBudget("under $10")).toBe(10);
     expect(parseBudget("free stuff only")).toBe(0);
+  });
+});
+
+describe("access needs", () => {
+  it("never suggests an event that doesn't meet every need", () => {
+    const picks = rankEvents(EVENTS, { ...base, interests: [], maxDistanceKm: 50, maxBudget: undefined, needs: ["step_free", "sensory_friendly"] }, NOW, { limit: 50 });
+    expect(picks.length).toBeGreaterThan(0);
+    for (const p of picks) { expect(p.event.access).toContain("step_free"); expect(p.event.access).toContain("sensory_friendly"); }
+    expect(picks[0]!.reasons).toContain("♿ step-free");
+  });
+  it("reads needs from a text reply", () => {
+    expect(parseNeeds("I use a wheelchair and I'm bringing my kid")).toEqual(["step_free", "kid_friendly"]);
+    expect(parseNeeds("somewhere quiet please")).toEqual(["sensory_friendly"]);
+    expect(parseNeeds("nope, all good")).toEqual([]);
   });
 });
