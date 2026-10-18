@@ -1,0 +1,495 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"></head><body>
+<title>Huddle App Demo</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Unbounded:wght@500;700;800&family=Manrope:wght@400;500;600;700&display=swap">
+<style>
+/* Layout: laptop stage with a journey rail on the left and a live iPhone on the right.
+   Single committed look: dusk-ink phone, sunset accents, one gradient per activity. */
+:root {
+  --desk: #0b0c10;
+  --desk-2: #15161d;
+  --ink: #111217;
+  --card: #1b1d24;
+  --card-2: #242731;
+  --line: #ffffff14;
+  --text: #f6f1ea;
+  --muted: #9a98a6;
+  --coral: #ff7a59;
+  --sun: #ffc857;
+  --mint: #7fe0c4;
+  --display: "Unbounded", "Arial Black", system-ui, sans-serif;
+  --body: "Manrope", system-ui, -apple-system, "Segoe UI", sans-serif;
+  color-scheme: dark;
+}
+html, body { height: 100%; }
+body {
+  margin: 0; background: radial-gradient(80% 70% at 75% 40%, #2a1a2e 0%, transparent 60%), var(--desk);
+  color: var(--text); font-family: var(--body); overflow: hidden;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+  box-sizing: border-box;
+}
+.stage { height: 100%; display: grid; grid-template-columns: minmax(0, 340px) auto; gap: 6vw; align-items: center; justify-content: center; }
+@media (max-width: 820px) { .stage { grid-template-columns: auto; } .rail { display: none; } }
+
+/* journey rail */
+.rail { display: grid; gap: 28px; }
+.brand { font: 800 44px/1 var(--display); letter-spacing: -.03em; }
+.brand span { color: var(--coral); }
+.tag { color: var(--muted); font-size: 16px; line-height: 1.5; max-width: 30ch; margin-top: 12px; }
+.steps { list-style: none; margin: 0; padding: 0; display: grid; gap: 4px; counter-reset: s; }
+.steps button { all: unset; cursor: pointer; display: grid; grid-template-columns: 28px 1fr; gap: 12px; align-items: center; padding: 10px 12px; border-radius: 12px; color: var(--muted); font-weight: 600; font-size: 15px; transition: background .25s, color .25s; }
+.steps button:hover, .steps button:focus-visible { background: var(--desk-2); color: var(--text); }
+.steps button b { width: 28px; height: 28px; border-radius: 50%; display: grid; place-items: center; font: 700 12px var(--display); background: var(--desk-2); color: var(--muted); transition: background .3s, color .3s; }
+.steps button.on { color: var(--text); background: var(--desk-2); }
+.steps button.on b { background: var(--coral); color: var(--ink); }
+.steps button.done b { background: #ff7a5933; color: var(--coral); }
+.fine { color: var(--muted); font-size: 12px; line-height: 1.5; max-width: 34ch; }
+
+/* phone */
+.phone-wrap { width: 390px; height: 844px; transform-origin: center; }
+.phone { position: relative; width: 390px; height: 844px; border-radius: 56px; background: var(--ink); overflow: hidden;
+  box-shadow: 0 0 0 11px #1d1e24, 0 0 0 12px #34353d, 0 40px 120px #000c, 0 0 160px #ff7a5922; }
+.island { position: absolute; top: 11px; left: 50%; translate: -50% 0; width: 122px; height: 35px; border-radius: 20px; background: #000; z-index: 20; }
+.statusbar { position: absolute; inset: 0 0 auto; height: 54px; display: flex; justify-content: space-between; align-items: center; padding: 6px 34px 0; font: 600 16px var(--body); z-index: 15; }
+.statusbar i { display: inline-flex; gap: 6px; align-items: center; font-style: normal; }
+.homebar { position: absolute; bottom: 8px; left: 50%; translate: -50% 0; width: 136px; height: 5px; border-radius: 3px; background: #ffffffcc; z-index: 20; }
+.blob { position: absolute; width: 380px; height: 380px; border-radius: 50%; filter: blur(70px); opacity: .45; z-index: 0; animation: drift 14s ease-in-out infinite alternate; pointer-events: none; }
+.blob.a { background: var(--coral); top: -160px; left: -120px; }
+.blob.b { background: #7b5cff; bottom: -180px; right: -160px; animation-delay: -6s; opacity: .3; }
+@keyframes drift { to { transform: translate(60px, 80px) scale(1.15); } }
+.screen { position: absolute; inset: 54px 0 0; padding: 12px 22px 40px; display: flex; flex-direction: column; gap: 16px; z-index: 5; overflow: hidden; }
+.screen.enter { animation: enter .55s cubic-bezier(.2, .9, .2, 1) both; }
+@keyframes enter { from { transform: translateX(40px); opacity: 0; } }
+.rise { animation: rise .6s cubic-bezier(.2, .9, .2, 1) both; }
+@keyframes rise { from { transform: translateY(18px); opacity: 0; } }
+@keyframes pop { 0% { transform: scale(.6); opacity: 0 } 70% { transform: scale(1.08) } 100% { transform: scale(1); opacity: 1 } }
+
+h1 { font: 700 30px/1.08 var(--display); letter-spacing: -.03em; margin: 0; text-wrap: balance; }
+h1 em { font-style: normal; color: var(--coral); }
+.kicker { font-size: 13px; color: var(--muted); font-weight: 600; letter-spacing: .02em; }
+.label { font-size: 11px; letter-spacing: .12em; text-transform: uppercase; color: var(--muted); font-weight: 700; }
+
+.composer { background: var(--card); border: 1px solid var(--line); border-radius: 24px; padding: 18px; display: grid; gap: 14px; }
+.typed { font-size: 19px; line-height: 1.4; font-weight: 600; min-height: 54px; }
+.caret { display: inline-block; width: 2px; height: 20px; background: var(--coral); margin-left: 2px; vertical-align: -3px; animation: blinkc 1s steps(2) infinite; }
+@keyframes blinkc { 50% { opacity: 0; } }
+.chips { display: flex; flex-wrap: wrap; gap: 8px; min-height: 32px; }
+.chip { padding: 7px 12px; border-radius: 999px; background: var(--card-2); font-size: 13px; font-weight: 700; animation: pop .45s both; display: inline-flex; gap: 6px; align-items: center; }
+.chip i { font-style: normal; color: var(--muted); font-weight: 600; }
+
+.avatars { display: flex; }
+.av { width: 44px; height: 44px; border-radius: 50%; display: grid; place-items: center; font: 700 16px var(--display); color: var(--ink); border: 3px solid var(--ink); flex: none; position: relative; }
+.avatars .av + .av { margin-left: -10px; }
+.av.sm { width: 30px; height: 30px; font-size: 11px; border-width: 2px; }
+.av.sm + .av.sm { margin-left: -8px; }
+.c-sarah { background: #ffc857; } .c-amir { background: #7fe0c4; } .c-jenna { background: #f6a6c1; } .c-kai { background: #a9b8ff; }
+.circle-row { display: flex; align-items: center; justify-content: space-between; background: var(--card); border: 1px solid var(--line); border-radius: 20px; padding: 14px 16px; }
+.circle-row b { display: block; font-size: 15px; } .circle-row span { font-size: 13px; color: var(--muted); }
+
+.cta { all: unset; cursor: pointer; margin-top: auto; text-align: center; padding: 18px; border-radius: 20px; background: var(--coral); color: var(--ink); font: 700 16px var(--display); letter-spacing: -.01em; transition: transform .15s, opacity .3s; }
+.cta:active { transform: scale(.97); } .cta:focus-visible { outline: 3px solid var(--sun); outline-offset: 3px; }
+.cta[disabled] { opacity: .35; pointer-events: none; }
+.ghost { all: unset; cursor: pointer; text-align: center; padding: 14px; border-radius: 16px; background: var(--card-2); font-weight: 700; font-size: 14px; }
+.ghost:focus-visible { outline: 2px solid var(--coral); }
+
+/* gathering */
+.orbit { position: relative; width: 250px; height: 250px; margin: 6px auto 0; }
+.orbit .core { position: absolute; inset: 85px; border-radius: 50%; background: radial-gradient(circle, var(--coral), #ff7a5900 70%); animation: pulse 1.6s ease-in-out infinite; }
+@keyframes pulse { 50% { transform: scale(1.25); opacity: .6; } }
+.orbit .ring { position: absolute; inset: 0; border-radius: 50%; border: 1px dashed #ffffff22; animation: spin 12s linear infinite; }
+.orbit .ring .av { position: absolute; }
+@keyframes spin { to { transform: rotate(360deg); } }
+.orbit .ring .av span { display: block; animation: spin 12s linear infinite reverse; }
+.replies { display: grid; gap: 8px; }
+.reply { display: flex; align-items: center; gap: 12px; background: var(--card); border-radius: 16px; padding: 10px 14px; font-weight: 600; font-size: 14px; }
+.reply .st { margin-left: auto; font-size: 12px; color: var(--muted); }
+.reply.in .st { color: var(--mint); animation: pop .4s both; }
+.privacy { font-size: 12px; color: var(--muted); display: flex; gap: 8px; align-items: center; line-height: 1.4; }
+
+/* options */
+.opts { display: grid; gap: 12px; overflow-y: auto; margin: 0 -4px; padding: 4px; scrollbar-width: none; }
+.opt { all: unset; cursor: pointer; display: grid; grid-template-columns: 92px 1fr; border-radius: 22px; background: var(--card); border: 1px solid var(--line); overflow: hidden; transition: transform .2s, border-color .2s; }
+.opt:hover { transform: translateY(-2px); border-color: #ffffff33; } .opt:focus-visible { outline: 2px solid var(--coral); }
+.art { display: grid; place-items: center; font-size: 40px; position: relative; }
+.art::after { content: ""; position: absolute; inset: 0; background: radial-gradient(circle at 30% 20%, #ffffff55, transparent 60%); }
+.g-pickleball { background: linear-gradient(150deg, #ffc857, #ff7a59); }
+.g-walk { background: linear-gradient(150deg, #7fe0c4, #3a86ff); }
+.g-pho { background: linear-gradient(150deg, #f6a6c1, #b05f9c); }
+.opt .body { padding: 14px 14px 14px 16px; display: grid; gap: 6px; min-width: 0; }
+.opt h3 { margin: 0; font: 700 15px var(--display); letter-spacing: -.01em; }
+.meta { font-size: 12.5px; color: var(--muted); font-weight: 600; display: flex; flex-wrap: wrap; gap: 4px 10px; }
+.meta b { color: var(--text); }
+.why { font-size: 12.5px; line-height: 1.4; }
+.mine { font-size: 11.5px; color: var(--mint); font-weight: 700; display: flex; gap: 6px; align-items: center; }
+.badge { position: absolute; top: 8px; left: 8px; z-index: 2; font-size: 9px; font-weight: 800; letter-spacing: .08em; text-transform: uppercase; background: #0008; color: #fff; padding: 3px 6px; border-radius: 6px; }
+
+/* confirm */
+.plan { border-radius: 28px; overflow: hidden; background: var(--card); border: 1px solid var(--line); }
+.plan .hero { height: 130px; position: relative; display: grid; place-items: center; font-size: 62px; }
+.plan .hero .ver { position: absolute; top: 14px; right: 14px; background: #0009; color: #fff; font: 700 11px var(--display); padding: 6px 10px; border-radius: 999px; }
+.plan .info { padding: 16px 18px; display: grid; gap: 4px; }
+.plan h2 { margin: 0; font: 700 20px var(--display); letter-spacing: -.02em; }
+.plan .when { font-weight: 700; } .plan .where { color: var(--muted); font-size: 13px; font-weight: 600; }
+.plan.flip { animation: flip .7s cubic-bezier(.3, .9, .3, 1); }
+@keyframes flip { 0% { transform: rotateX(0) } 50% { transform: rotateX(90deg) } 100% { transform: rotateX(0) } }
+.roster { display: grid; gap: 8px; }
+.who { display: flex; align-items: center; gap: 12px; font-weight: 700; font-size: 14px; }
+.who .st { margin-left: auto; font-size: 12px; color: var(--muted); display: inline-flex; gap: 6px; align-items: center; }
+.who .st.ok { color: var(--mint); animation: pop .4s both; }
+.tick { width: 20px; height: 20px; border-radius: 50%; background: var(--mint); color: var(--ink); display: grid; place-items: center; font-size: 12px; font-weight: 900; }
+.deadline { font-size: 12px; color: var(--muted); font-variant-numeric: tabular-nums; }
+.won { text-align: center; display: grid; gap: 6px; animation: rise .6s both; }
+.won h1 { font-size: 34px; }
+canvas.confetti { position: absolute; inset: 0; z-index: 30; pointer-events: none; }
+
+/* group thread */
+.pinned { display: grid; grid-template-columns: 56px 1fr auto; gap: 12px; align-items: center; background: var(--card); border: 1px solid var(--line); border-radius: 20px; padding: 10px; }
+.pinned .art { width: 56px; height: 56px; border-radius: 14px; font-size: 28px; overflow: hidden; }
+.pinned b { font: 700 14px var(--display); display: block; } .pinned span { font-size: 12px; color: var(--muted); font-weight: 600; }
+.pinned .ver { font: 700 10px var(--display); background: var(--card-2); padding: 5px 8px; border-radius: 999px; }
+.pinned.flip { animation: flip .7s cubic-bezier(.3, .9, .3, 1); }
+.thread { flex: 1; display: flex; flex-direction: column; justify-content: flex-end; gap: 8px; overflow: hidden; }
+.bub { max-width: 78%; padding: 10px 14px; border-radius: 20px; font-size: 14px; line-height: 1.35; animation: rise .4s both; }
+.bub small { display: block; font-size: 11px; color: var(--muted); font-weight: 700; margin-bottom: 2px; }
+.bub.them { background: var(--card-2); align-self: flex-start; border-bottom-left-radius: 6px; }
+.bub.me { background: var(--coral); color: var(--ink); align-self: flex-end; border-bottom-right-radius: 6px; font-weight: 600; }
+.sys { align-self: center; text-align: center; font-size: 12px; color: var(--muted); max-width: 86%; line-height: 1.4; animation: rise .4s both; }
+.change { align-self: stretch; background: linear-gradient(var(--card), var(--card)) padding-box, linear-gradient(120deg, var(--sun), var(--coral)) border-box; border: 1.5px solid transparent; border-radius: 20px; padding: 14px; display: grid; gap: 10px; animation: rise .5s both; }
+.change b { font: 700 14px var(--display); } .change p { margin: 0; font-size: 13px; color: var(--muted); line-height: 1.4; }
+.change .row { display: flex; gap: 8px; } .change .row button { flex: 1; }
+.mini { all: unset; cursor: pointer; text-align: center; padding: 11px; border-radius: 14px; font-weight: 800; font-size: 13px; background: var(--card-2); }
+.mini.go { background: var(--coral); color: var(--ink); }
+.mini:focus-visible { outline: 2px solid var(--sun); }
+.actions { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+
+/* repeat */
+.big-emoji { font-size: 84px; text-align: center; animation: pop .7s both; }
+.choice { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.note { background: var(--card); border-radius: 20px; padding: 16px; font-size: 14px; line-height: 1.5; display: grid; gap: 10px; animation: rise .5s both; }
+@media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation-duration: .01s !important; transition-duration: .01s !important; } }
+</style>
+
+<div class="stage">
+  <aside class="rail">
+    <div>
+      <div class="brand">hud<span>dle</span></div>
+      <div class="tag">turns "we should hang out" into a plan that actually happens.</div>
+    </div>
+    <ol class="steps" id="steps"></ol>
+    <div class="fine">Live demo running our real matching and confirmation engine. Venues, travel times and friends are sample data.</div>
+  </aside>
+  <div class="phone-wrap" id="wrap">
+    <div class="phone" id="phone">
+      <div class="blob a"></div><div class="blob b"></div>
+      <div class="island"></div>
+      <div class="statusbar"><span>9:41</span><i>
+        <svg width="18" height="12" viewBox="0 0 18 12" fill="currentColor"><rect x="0" y="8" width="3" height="4" rx="1"/><rect x="5" y="5" width="3" height="7" rx="1"/><rect x="10" y="2.5" width="3" height="9.5" rx="1"/><rect x="15" y="0" width="3" height="12" rx="1"/></svg>
+        <svg width="26" height="12" viewBox="0 0 26 12"><rect x=".5" y=".5" width="22" height="11" rx="3.5" fill="none" stroke="currentColor" opacity=".5"/><rect x="2" y="2" width="17" height="8" rx="2" fill="currentColor"/><rect x="24" y="4" width="1.5" height="4" rx=".75" fill="currentColor" opacity=".5"/></svg>
+      </i></div>
+      <div id="screen" class="screen"></div>
+      <div class="homebar"></div>
+    </div>
+  </div>
+</div>
+
+<script>"use strict";var Core=(()=>{var A=Object.defineProperty;var G=Object.getOwnPropertyDescriptor;var H=Object.getOwnPropertyNames;var K=Object.prototype.hasOwnProperty;var W=(n,e,t)=>e in n?A(n,e,{enumerable:!0,configurable:!0,writable:!0,value:t}):n[e]=t;var F=(n,e)=>{for(var t in e)A(n,t,{get:e[t],enumerable:!0})},Y=(n,e,t,i)=>{if(e&&typeof e=="object"||typeof e=="function")for(let s of H(e))!K.call(n,s)&&s!==t&&A(n,s,{get:()=>e[s],enumerable:!(i=G(e,s))||i.enumerable});return n};var Q=n=>Y(A({},"__esModule",{value:!0}),n);var m=(n,e,t)=>W(n,typeof e!="symbol"?e+"":e,t);var de={};F(de,{OutingLifecycle:()=>R,formatLocal:()=>w,fx:()=>N,generateProposals:()=>D,toPublicPlan:()=>$});var f=n=>Date.parse(n),M=n=>new Date(n).toISOString();function X(n,e,t,i,s,r){if(!n||!n.optedInAt||n.stoppedAt)return{status:"fail",reason:"no_consent"};if(!e||e.revokedAt||f(e.expiresAt)<=r)return{status:"fail",reason:"no_valid_grant"};if(!t||t.willing===void 0)return{status:"unknown",reason:"no_reply"};if(t.willing!=="yes")return{status:"fail",reason:"not_willing"};if(t.activityVotes[i.id]==="no")return{status:"fail",reason:"passed_activity"};if(t.maxBudget!==void 0&&i.costPerPerson>t.maxBudget)return{status:"fail",reason:"budget"};for(let b of t.requiredNeeds)if(!i.supportedNeeds.includes(b))return{status:"fail",reason:"need_unmet"};let u=t.minNoticeMinutes??0;if(s-r<u*6e4)return{status:"fail",reason:"notice"};let o=t.travel[i.venueId];if(!o)return{status:"unknown",reason:"travel_unknown"};if(t.maxTravelMinutes!==void 0&&o.minutes>t.maxTravelMinutes)return{status:"fail",reason:"travel_limit"};let c=s+i.durationMinutes*6e4,l=s-o.minutes*6e4,y=c+(t.needsReturnTravel?o.minutes*6e4:0);return l<f(e.start)||y>f(e.end)?{status:"fail",reason:"window"}:{status:"ok",travelMinutes:o.minutes,departure:l}}function ee(n,e,t){if(n.existingEvent)return[f(n.existingEvent.start)];let i=[],s=Math.max(f(e.windowStart),n.openFrom?f(n.openFrom):-1/0),r=Math.min(f(e.windowEnd),n.openUntil?f(n.openUntil):1/0);for(let u=s;u+n.durationMinutes*6e4<=r;u+=t*6e4)i.push(u);return i}function te(n,e){let t=e+n.durationMinutes*6e4;return!(n.openFrom&&e<f(n.openFrom)||n.openUntil&&t>f(n.openUntil))}function D(n){let{outing:e,users:t,grants:i,responses:s,activities:r}=n,u=f(n.now),o=n.stepMinutes??30,c=a=>i.find(p=>p.userId===a&&p.outingId===e.id),l=a=>s.find(p=>p.userId===a&&p.outingId===e.id),y=[],b=0;for(let a of r)for(let p of ee(a,e,o)){if(!te(a,p))continue;let I=new Map;for(let d of e.rosterIds)I.set(d,X(t.get(d),c(d),l(d),a,p,u));let O=I.get(e.organizerId);if(O.status!=="ok"){O.status==="unknown"&&b++;continue}let k;if(e.policy==="everyone"){let d=[...I.values()].map(v=>v.status);if(d.includes("fail"))continue;if(d.includes("unknown")){b++;continue}if(k=[...e.rosterIds],k.length<a.minAttendees||k.length>a.maxAttendees)continue}else{let d=e.rosterIds.filter(v=>v!==e.organizerId&&I.get(v).status==="ok").sort((v,z)=>{let L=l(v)?.activityVotes[a.id]==="yes"?0:1,B=l(z)?.activityVotes[a.id]==="yes"?0:1;return L-B||v.localeCompare(z)});if(k=[e.organizerId,...d].slice(0,a.maxAttendees),k.length<a.minAttendees){e.rosterIds.some(v=>I.get(v).status==="unknown")&&b++;continue}}let C=k.map(d=>I.get(d)),q=C.map(d=>d.travelMinutes),E=k.filter(d=>l(d)?.activityVotes[a.id]==="yes").length,T=[];a.isFixture&&T.push("Sample venue and travel data (demo fixture)"),a.bookingStatus==="unverified"&&T.push("Venue availability not yet verified"),y.push({id:`${a.id}@${M(p)}`,activity:a,start:M(p),end:M(p+a.durationMinutes*6e4),attendeeIds:k,yesVotes:E,worstTravelMinutes:Math.max(...q),totalTravelMinutes:q.reduce((d,v)=>d+v,0),earliestDeparture:M(Math.min(...C.map(d=>d.departure))),uncertainties:T,publicReason:`${a.fitBlurb} Fits the group's shared window, budgets, and travel limits.`})}let Z=y.sort((a,p)=>ne(a,p,e.policy)),V=new Set,_=[];for(let a of Z)if(!V.has(a.activity.id)&&(V.add(a.activity.id),_.push(a),_.length===3))break;return{options:_,unresolvedCount:b,noMatch:_.length===0}}function ne(n,e,t){return(t==="flexible"?e.attendeeIds.length-n.attendeeIds.length:0)||e.yesVotes-n.yesVotes||n.worstTravelMinutes-e.worstTravelMinutes||n.totalTravelMinutes-e.totalTravelMinutes||n.activity.costPerPerson-e.activity.costPerPerson||n.id.localeCompare(e.id)}function $(n,e,t){return{version:n.version,activity:n.activity.name,venue:n.activity.venueName,area:n.activity.area,start:n.start,end:n.end,timezone:t,costPerPerson:n.activity.costPerPerson,bookingStatus:n.activity.bookingStatus,attendees:n.attendeeIds.map(i=>e.get(i)?.displayName??"Someone"),isSampleData:n.activity.isFixture,reason:n.publicReason}}function w(n,e){return new Intl.DateTimeFormat("en-US",{timeZone:e,weekday:"short",month:"short",day:"numeric",hour:"numeric",minute:"2-digit"}).format(new Date(n))}function J(n){let e=n.isSampleData?" (sample data)":"";return[`Plan v${n.version}: ${n.activity} at ${n.venue}, ${n.area}${e}`,`${w(n.start,n.timezone)} \u2013 ${w(n.end,n.timezone)}`,`~$${n.costPerPerson}/person \xB7 ${n.attendees.join(", ")}`,n.reason].join(`
+`)}var S=6e4,h=n=>Date.parse(n),x=n=>new Date(n).toISOString(),R=class{constructor(e,t,i=30){this.outing=e;this.users=t;this.responseMinutes=i;m(this,"state","draft");m(this,"versions",[]);m(this,"currentVersion");m(this,"pendingVersion");m(this,"currentInfeasible",!1);m(this,"acceptances",new Map);m(this,"repeatInterest",new Map);m(this,"outbox",[]);m(this,"processed",new Map)}v(e){return this.versions.find(t=>t.version===e)}get current(){return this.v(this.currentVersion)}get pending(){return this.v(this.pendingVersion)}consented(e){let t=this.users.get(e);return!!t?.optedInAt&&!t.stoppedAt}name(e){return this.users.get(e)?.displayName??"Someone"}ok(e){return{ok:!0,state:this.state,message:e}}err(e){return{ok:!1,state:this.state,error:e}}enqueue(e){this.outbox.some(t=>t.key===e.key)||this.outbox.push({...e,status:"pending"})}cancelJobs(e){for(let t of this.outbox)t.status==="pending"&&e(t)&&(t.status="cancelled")}planText(e){return J($({version:e.version,...e.plan},this.users,this.outing.timezone))}scheduleReminder(e,t){let i=h(e.plan.start)-60*S;i<=t||this.enqueue({key:`reminder:${this.outing.id}:v${e.version}`,kind:"reminder",to:e.plan.attendeeIds,text:`Reminder: starts in 1 hour.
+${this.planText(e)}`,dueAt:x(i),version:e.version})}once(e,t){let i=this.processed.get(e);if(i)return i;let s=t();return this.processed.set(e,s),s}openCollecting(){return this.state!=="draft"?this.err("invalid_transition"):(this.state="collecting",this.ok())}propose(e,t,i,s){return this.once(e,()=>{if(t!==this.outing.organizerId)return this.err("unauthorized");if(this.state!=="collecting")return this.err("invalid_transition");let r=h(s),u=Math.min(r+this.responseMinutes*S,h(i.earliestDeparture));if(u<=r)return this.err("deadline_passed");let o={version:this.versions.length+1,kind:"initial",createdAt:s,deadline:x(u),plan:{activity:i.activity,start:i.start,end:i.end,attendeeIds:i.attendeeIds,publicReason:i.publicReason,earliestDeparture:i.earliestDeparture}};this.versions.push(o),this.pendingVersion=o.version,this.state="awaiting_confirmation";for(let c of o.plan.attendeeIds)this.enqueue({key:`confirm:${this.outing.id}:v${o.version}:${c}`,kind:"private",to:[c],dueAt:s,version:o.version,text:`${this.planText(o)}
+Reply "CONFIRM ${o.version}" to join and share your contact with the group, or "PASS".`});return this.ok()})}accept(e,t,i,s,r){return this.once(e,()=>{let u=this.pending;if(!u||i!==u.version)return this.err("stale_version");if(!["awaiting_confirmation","change_pending"].includes(this.state))return this.err("invalid_transition");if(!u.plan.attendeeIds.includes(t))return this.err("not_invited");if(!this.consented(t))return this.err("no_consent");if(h(r)>h(u.deadline))return this.err("deadline_passed");if(!s)return this.err("identity_consent_required");let o=`${i}:${t}`;if(this.acceptances.has(o))return this.ok("already_recorded");this.acceptances.set(o,{answer:"accept",at:r,shareIdentity:s});let c=u.plan.attendeeIds.every(l=>this.acceptances.get(`${i}:${l}`)?.answer==="accept");return c&&this.applyVersion(u,h(r)),this.ok(c?"confirmed":"waiting_on_others")})}decline(e,t,i,s){return this.once(e,()=>{let r=this.pending;return!r||i!==r.version?this.err("stale_version"):r.plan.attendeeIds.includes(t)?(this.acceptances.set(`${i}:${t}`,{answer:"decline",at:s,shareIdentity:!1}),this.dropPending(),this.enqueue({key:`declined:${this.outing.id}:v${i}`,kind:"private",to:[this.outing.organizerId],dueAt:s,text:`Plan v${i} didn't get everyone's yes. Want to try another option or time?`}),this.ok()):this.err("not_invited")})}tick(e){let t=this.pending;t&&h(e)>h(t.deadline)&&this.dropPending()}dropPending(){let e=this.pending;e&&(this.cancelJobs(t=>t.version===e.version&&t.kind==="private"),this.pendingVersion=void 0,e.kind==="initial"?this.state="collecting":this.state=this.currentInfeasible?"change_pending":"confirmed")}applyVersion(e,t){let i=this.current;this.currentVersion=e.version,this.pendingVersion=void 0,this.currentInfeasible=!1,this.state="confirmed",this.cancelJobs(s=>s.kind==="reminder"),i?(i.plan.attendeeIds.join()===e.plan.attendeeIds.join()||this.enqueue({key:`roster:${this.outing.id}:v${e.version}`,kind:"update_group_roster",to:e.plan.attendeeIds,dueAt:x(t),text:"",version:e.version}),this.enqueue({key:`update:${this.outing.id}:v${e.version}`,kind:"group",to:e.plan.attendeeIds,dueAt:x(t),text:`Updated plan:
+${this.planText(e)}`,version:e.version})):this.enqueue({key:`group:${this.outing.id}`,kind:"create_group",to:e.plan.attendeeIds,dueAt:x(t),text:`You're confirmed!
+${this.planText(e)}`,version:e.version}),this.scheduleReminder(e,t)}requestChange(e,t,i,s,r){return this.once(e,()=>{let u=this.current;if(!u||!["confirmed","change_pending"].includes(this.state))return this.err("invalid_transition");if(!u.plan.attendeeIds.includes(t))return this.err("unauthorized");if(this.pending)return this.err("change_already_pending");let o={...u.plan,...i},c=h(r),l={version:this.versions.length+1,kind:"change",createdAt:r,plan:o,deadline:x(Math.min(c+this.responseMinutes*S,h(o.start)))};this.versions.push(l),this.pendingVersion=l.version,this.state="change_pending",s||(this.currentInfeasible=!0,this.cancelJobs(y=>y.kind==="reminder"));for(let y of o.attendeeIds)this.enqueue({key:`confirm:${this.outing.id}:v${l.version}:${y}`,kind:"private",to:[y],dueAt:r,version:l.version,text:`Proposed change:
+${this.planText(l)}
+Reply "CONFIRM ${l.version}" to accept or "KEEP" to keep the current plan.`});return this.ok()})}withdraw(e,t,i){return this.once(e,()=>{let s=this.current;if(!s||!s.plan.attendeeIds.includes(t))return this.err("not_attending");let r=s.plan.attendeeIds.filter(c=>c!==t);this.pending&&this.dropPending(),this.cancelJobs(c=>c.kind==="reminder");let u=r.length<s.plan.activity.minAttendees;if(this.outing.policy==="everyone"||u)return this.currentInfeasible=!0,this.state="change_pending",this.enqueue({key:`replan:${this.outing.id}:v${s.version}`,kind:"private",to:[this.outing.organizerId],dueAt:i,text:"The current plan no longer works for the group. Replan or cancel?"}),this.ok("needs_replan");let o={...s,version:this.versions.length+1,kind:"change",createdAt:i,deadline:i,plan:{...s.plan,attendeeIds:r}};return this.versions.push(o),this.applyVersion(o,h(i)),this.ok()})}recordLateness(e,t,i,s){return this.once(e,()=>{let r=this.current;if(this.state!=="confirmed"||!r?.plan.attendeeIds.includes(t))return this.err("not_attending");let u=r.plan.attendeeIds.filter(o=>o!==t);return this.enqueue({key:`late:${e}`,kind:"group",to:u,dueAt:s,text:`Heads-up: ${this.name(t)} is running about ${i} min late.`}),this.ok()})}complete(e){let t=this.current;if(this.state!=="confirmed"||!t)return this.err("invalid_transition");this.state="completed",this.cancelJobs(i=>i.kind==="reminder");for(let i of t.plan.attendeeIds)this.enqueue({key:`repeat:${this.outing.id}:${i}`,kind:"repeat_prompt",to:[i],dueAt:e,text:"Run it back next week? Reply YES or PASS (only you see this)."});return this.ok()}cancel(e){return e!==this.outing.organizerId?this.err("unauthorized"):["completed","cancelled","expired"].includes(this.state)?this.err("invalid_transition"):(this.state="cancelled",this.pendingVersion=void 0,this.cancelJobs(()=>!0),this.ok())}recordRepeat(e,t){return this.state!=="completed"||!this.current?.plan.attendeeIds.includes(e)?this.err("invalid_transition"):(this.repeatInterest.set(e,t),this.ok())}nextRoundRoster(){return[...this.repeatInterest].filter(([,e])=>e).map(([e])=>e)}stop(e,t){let i=this.users.get(e);i&&(i.stoppedAt=t);for(let s of this.outbox)s.status==="pending"&&s.to.includes(e)&&s.to.length===1&&(s.status="suppressed");this.current?.plan.attendeeIds.includes(e)&&this.state==="confirmed"?this.withdraw(`stop:${e}:${t}`,e,t):this.pending?.plan.attendeeIds.includes(e)&&this.dropPending()}dueJobs(e){let t=h(e),i=[];for(let s of this.outbox)if(!(s.status!=="pending"||h(s.dueAt)>t)){if(s.to=s.to.filter(r=>this.consented(r)),s.to.length===0){s.status="suppressed";continue}i.push(s)}return i}};var N={};F(N,{NOW:()=>ie,TZ:()=>P,activities:()=>re,grants:()=>ae,outing:()=>oe,responses:()=>ue,users:()=>j});var P="America/Los_Angeles",ie="2026-10-18T17:00:00.000Z",U="2026-10-17T22:00:00.000Z",se="2026-10-18T16:00:00.000Z",j=[{id:"sarah",displayName:"Sarah",timezone:P,optedInAt:U},{id:"amir",displayName:"Amir",timezone:P,optedInAt:U},{id:"jenna",displayName:"Jenna",timezone:P,optedInAt:U},{id:"kai",displayName:"Kai",timezone:P,optedInAt:U}],re=[{id:"pickleball",kind:"sport",name:"Pickleball doubles",venueId:"v_courts",venueName:"Sample Park Courts",area:"Green Lake",durationMinutes:90,costPerPerson:0,minAttendees:4,maxAttendees:4,supportedNeeds:[],openFrom:"2026-10-18T15:00:00.000Z",openUntil:"2026-10-19T02:00:00.000Z",bookingStatus:"unverified",isFixture:!0,fitBlurb:"Active, free, and needs exactly four."},{id:"walk",kind:"outdoors",name:"Lake loop walk",venueId:"v_lake",venueName:"Sample Lake Trailhead",area:"Green Lake",durationMinutes:60,costPerPerson:0,minAttendees:2,maxAttendees:8,supportedNeeds:["wheelchair_access"],bookingStatus:"not_required",isFixture:!0,fitBlurb:"Easy, free, and flexible on headcount."},{id:"pho",kind:"meal",name:"Pho lunch",venueId:"v_pho",venueName:"Sample Pho House",area:"U District",durationMinutes:75,costPerPerson:14,minAttendees:2,maxAttendees:6,supportedNeeds:["vegetarian","wheelchair_access"],openFrom:"2026-10-18T18:00:00.000Z",openUntil:"2026-10-19T04:00:00.000Z",bookingStatus:"not_required",isFixture:!0,fitBlurb:"Sit-down meal near campus."}],oe={id:"o1",organizerId:"sarah",rosterIds:["sarah","amir","jenna","kai"],policy:"flexible",windowStart:"2026-10-18T21:00:00.000Z",windowEnd:"2026-10-19T01:00:00.000Z",timezone:P},ae=j.map(n=>({userId:n.id,outingId:"o1",start:"2026-10-18T21:00:00.000Z",end:"2026-10-19T01:00:00.000Z",expiresAt:"2026-10-19T01:00:00.000Z"})),g=n=>({minutes:n,basis:"fixture estimate",estimatedAt:se}),ue=[{userId:"sarah",outingId:"o1",willing:"yes",activityVotes:{pickleball:"yes",walk:"yes",pho:"maybe"},requiredNeeds:[],needsReturnTravel:!1,maxTravelMinutes:30,travel:{v_courts:g(15),v_lake:g(15),v_pho:g(20)}},{userId:"amir",outingId:"o1",willing:"yes",activityVotes:{pickleball:"yes",walk:"maybe",pho:"yes"},requiredNeeds:[],needsReturnTravel:!0,travel:{v_courts:g(20),v_lake:g(20),v_pho:g(10)}},{userId:"jenna",outingId:"o1",willing:"yes",activityVotes:{pickleball:"yes",walk:"yes",pho:"yes"},requiredNeeds:[],needsReturnTravel:!1,travel:{v_courts:g(25),v_lake:g(25),v_pho:g(15)}},{userId:"kai",outingId:"o1",willing:"yes",activityVotes:{pickleball:"yes",walk:"yes",pho:"yes"},requiredNeeds:[],needsReturnTravel:!1,maxBudget:10,note:"tight on money this week",travel:{v_courts:g(10),v_lake:g(10),v_pho:g(10)}}];return Q(de);})();
+</script>
+<script>
+const { generateProposals, OutingLifecycle, formatLocal, fx } = Core;
+const TZ = fx.TZ;
+const MIN = 60000;
+const at = (m) => new Date(Date.parse(fx.NOW) + m * MIN).toISOString();
+const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+const $ = (s, r = document) => r.querySelector(s);
+const ART = { pickleball: "🏓", walk: "🌊", pho: "🍜" };
+const NAMES = { sarah: "Sarah", amir: "Amir", jenna: "Jenna", kai: "Kai" };
+const av = (id, sm = "") => `<div class="av ${sm} c-${id}" title="${NAMES[id]}">${NAMES[id][0]}</div>`;
+const time = (iso) => formatLocal(iso, TZ).replace(/^\w+, /, "");
+const hm = (iso) => new Intl.DateTimeFormat("en-US", { timeZone: TZ, hour: "numeric", minute: "2-digit" }).format(new Date(iso));
+
+const STEPS = ["Ask", "Private replies", "Match", "Confirm", "Coordinate", "Run it back"];
+let state, run = 0;
+
+function reset() {
+  const users = new Map(fx.users.map((u) => [u.id, { ...u }]));
+  state = { users, options: [], pick: null, life: null };
+}
+
+// ---------- shell ----------
+function rail(active) {
+  $("#steps").innerHTML = STEPS.map((s, i) =>
+    `<li><button data-i="${i}" class="${i === active ? "on" : i < active ? "done" : ""}"><b>${i + 1}</b>${s}</button></li>`).join("");
+}
+$("#steps").addEventListener("click", (e) => { const b = e.target.closest("button"); if (b) jump(+b.dataset.i); });
+
+function show(html, step) {
+  rail(step);
+  const s = $("#screen");
+  s.className = "screen"; void s.offsetWidth; s.className = "screen enter";
+  s.innerHTML = html;
+  return { id: ++run, alive() { return this.id === run; } };
+}
+
+function fit() {
+  const w = $("#wrap"), k = Math.min(1, (innerHeight - 48) / 844, (innerWidth - 32) / 390);
+  w.style.transform = `scale(${k})`;
+  w.style.margin = `${-(844 * (1 - k)) / 2}px ${-(390 * (1 - k)) / 2}px`;
+}
+addEventListener("resize", fit); fit();
+
+// ---------- 1. ask ----------
+async function home() {
+  reset();
+  const t = show(`
+    <div class="rise"><div class="kicker">sunday · weekend circle</div><h1>what are we<br>doing <em>today?</em></h1></div>
+    <div class="composer rise" style="animation-delay:.1s">
+      <div class="typed" id="typed"><span class="caret"></span></div>
+      <div class="label">what huddle understood</div>
+      <div class="chips" id="chips"></div>
+    </div>
+    <div class="circle-row rise" style="animation-delay:.2s">
+      <div><b>Weekend circle</b><span>4 people · all opted in</span></div>
+      <div class="avatars">${["sarah","amir","jenna","kai"].map((u) => av(u)).join("")}</div>
+    </div>
+    <button class="cta" id="go" disabled>find us a plan →</button>`, 0);
+  const text = "free sunday 2 to 6, something active, with my weekend circle, under $15";
+  const el = $("#typed");
+  await sleep(700);
+  for (let i = 1; i <= text.length; i++) {
+    if (!t.alive()) return;
+    el.innerHTML = text.slice(0, i) + '<span class="caret"></span>';
+    await sleep(28);
+  }
+  const chips = [["📅", "Sun, Oct 18", "2–6 PM"], ["⚡", "active", ""], ["👥", "weekend circle", ""], ["💸", "under", "$15"]];
+  for (const [e, a, b] of chips) {
+    await sleep(260); if (!t.alive()) return;
+    $("#chips").insertAdjacentHTML("beforeend", `<span class="chip">${e} ${a} ${b ? `<i>${b}</i>` : ""}</span>`);
+  }
+  const go = $("#go"); go.disabled = false; go.onclick = gather;
+}
+
+// ---------- 2. private replies ----------
+async function gather() {
+  const t = show(`
+    <div class="rise"><div class="kicker">step 2</div><h1>asking your circle <em>privately</em></h1></div>
+    <div class="orbit"><div class="core"></div><div class="ring">
+      ${["amir","jenna","kai"].map((u, i) => {
+        const a = (i / 3) * Math.PI * 2 - Math.PI / 2;
+        return `<div class="av c-${u}" style="left:${125 + 125 * Math.cos(a) - 22}px;top:${125 + 125 * Math.sin(a) - 22}px"><span>${NAMES[u][0]}</span></div>`;
+      }).join("")}
+    </div></div>
+    <div class="replies">${["amir","jenna","kai"].map((u) =>
+      `<div class="reply" id="r-${u}">${av(u, "sm")} ${NAMES[u]}<span class="st">texting…</span></div>`).join("")}</div>
+    <div class="privacy">🔒 budgets, travel and any passes stay between each person and huddle. not even you see them.</div>`, 1);
+  for (const u of ["kai", "amir", "jenna"]) {
+    await sleep(900); if (!t.alive()) return;
+    const r = $(`#r-${u}`); r.classList.add("in"); r.querySelector(".st").textContent = "✓ replied privately";
+  }
+  await sleep(900); if (!t.alive()) return;
+  match();
+}
+
+// ---------- 3. match ----------
+async function match() {
+  const res = generateProposals({ outing: fx.outing, users: state.users, grants: fx.grants,
+    responses: fx.responses, activities: fx.activities, now: fx.NOW });
+  state.options = res.options;
+  const mine = (c) => fx.responses.find((r) => r.userId === "sarah").travel[c.activity.venueId]?.minutes;
+  show(`
+    <div class="rise"><div class="kicker">checked every activity and start time</div><h1>${res.options.length} plans that <em>actually work</em></h1></div>
+    <div class="opts">${res.options.map((c, i) => `
+      <button class="opt rise" style="animation-delay:${.1 + i * .12}s" data-i="${i}">
+        <div class="art g-${c.activity.id}">${c.activity.isFixture ? '<span class="badge">sample</span>' : ""}${ART[c.activity.id] ?? "✨"}</div>
+        <div class="body">
+          <h3>${c.activity.name}</h3>
+          <div class="meta"><span><b>${hm(c.start)}</b> · ${c.activity.durationMinutes} min</span><span><b>${c.activity.costPerPerson ? "$" + c.activity.costPerPerson : "free"}</b></span><span>${c.activity.area}</span></div>
+          <div class="avatars">${c.attendeeIds.map((u) => av(u, "sm")).join("")}</div>
+          <div class="why">${c.activity.fitBlurb}</div>
+          <div class="mine">🔒 only you see: ${mine(c)} min away</div>
+        </div>
+      </button>`).join("")}</div>
+    <div class="privacy">Ranked by who can come, who's excited, then fairest travel. No one's budget or reasons are shown.</div>`, 2);
+  $(".opts").addEventListener("click", (e) => { const b = e.target.closest(".opt"); if (b) confirmPlan(state.options[+b.dataset.i]); });
+}
+
+// ---------- 4. confirm ----------
+async function confirmPlan(c) {
+  if (!c) { await ensureOptions(); c = state.options[0]; }
+  state.pick = c;
+  const life = new OutingLifecycle(fx.outing, state.users);
+  state.life = life;
+  life.openCollecting();
+  life.propose("p1", "sarah", c, fx.NOW);
+  const v = life.pendingVersion;
+  const t = show(`
+    <div class="plan rise">
+      <div class="hero g-${c.activity.id}">${ART[c.activity.id]}<span class="ver">v${v}</span></div>
+      <div class="info"><h2>${c.activity.name}</h2>
+        <div class="when">${time(c.start)} – ${hm(c.end)}</div>
+        <div class="where">${c.activity.venueName} · ${c.activity.area} · ${c.activity.costPerPerson ? "$" + c.activity.costPerPerson : "free"}</div></div>
+    </div>
+    <div class="label">everyone confirms this exact plan</div>
+    <div class="roster">${c.attendeeIds.map((u) =>
+      `<div class="who" id="w-${u}">${av(u, "sm")} ${NAMES[u]}<span class="st">waiting</span></div>`).join("")}</div>
+    <div class="deadline" id="dl">replies close in 30:00</div>
+    <button class="cta" id="me">confirm v${v} & share my contact</button>`, 3);
+
+  let left = 30 * 60;
+  const timer = setInterval(() => { if (!t.alive()) return clearInterval(timer); left -= 7;
+    $("#dl").textContent = `replies close in ${Math.floor(left / 60)}:${String(left % 60).padStart(2, "0")}`; }, 1000);
+
+  const mark = (u) => { const s = $(`#w-${u} .st`); s.className = "st ok"; s.innerHTML = '<span class="tick">✓</span> confirmed'; };
+  $("#me").onclick = async () => {
+    $("#me").disabled = true;
+    life.accept("a:sarah", "sarah", v, true, at(1)); mark("sarah");
+    for (const u of c.attendeeIds.filter((x) => x !== "sarah")) {
+      await sleep(750); if (!t.alive()) return;
+      const r = life.accept(`a:${u}`, u, v, true, at(2)); mark(u);
+      if (r.message === "confirmed") { clearInterval(timer); await sleep(500); return celebrate(); }
+    }
+  };
+}
+
+async function celebrate() {
+  const c = state.pick, life = state.life;
+  const group = life.outbox.find((j) => j.kind === "create_group");
+  const t = show(`
+    <div style="flex:1;display:grid;place-content:center;gap:22px">
+      <div class="big-emoji">${ART[c.activity.id]}</div>
+      <div class="won"><div class="kicker">plan confirmed · v${life.currentVersion}</div><h1>you're <em>on.</em></h1>
+        <div class="privacy" style="justify-content:center">${hm(c.start)} · ${c.activity.venueName}</div></div>
+      <div class="avatars" style="justify-content:center">${c.attendeeIds.map((u) => av(u)).join("")}</div>
+      <div class="sys">group chat created with only the ${group.to.length} confirmed people.<br>reminder set for ${hm(new Date(Date.parse(life.current.plan.start) - 60 * MIN).toISOString())}.</div>
+    </div>
+    <button class="cta" id="open">open group chat →</button>`, 3);
+  confetti();
+  $("#open").onclick = thread;
+}
+
+// ---------- 5. coordinate ----------
+function pinned(p) {
+  return `<div class="pinned" id="pin"><div class="art g-${p.plan.activity.id}">${ART[p.plan.activity.id]}</div>
+    <div><b>${p.plan.activity.name}</b><span>${time(p.plan.start)} · ${p.plan.activity.venueName}</span></div><span class="ver">v${p.version}</span></div>`;
+}
+async function thread() {
+  if (!state.life) await quickConfirm();
+  const life = state.life;
+  const t = show(`
+    ${pinned(life.current)}
+    <div class="thread" id="th"><div class="sys">🔒 only confirmed people are in this chat</div></div>
+    <div class="actions"><button class="mini" id="late">I'm running late</button><button class="mini" id="after">it's over →</button></div>`, 4);
+  const th = $("#th");
+  const add = (html) => th.insertAdjacentHTML("beforeend", html);
+  $("#late").onclick = () => {
+    life.recordLateness("late:" + Date.now(), "sarah", 10, at(290));
+    add(`<div class="sys">heads-up sent to the others: <b>Sarah is running about 10 min late</b>. plan time unchanged, no location shared.</div>`);
+    $("#late").disabled = true;
+  };
+  $("#after").onclick = repeat;
+
+  await sleep(900); if (!t.alive()) return;
+  add(`<div class="bub them"><small>Jenna</small>so hyped 🏓</div>`);
+  await sleep(1100); if (!t.alive()) return;
+  add(`<div class="bub them"><small>Amir</small>can we push to 3? my bus is being weird</div>`);
+  await sleep(900); if (!t.alive()) return;
+  life.requestChange("chg", "amir", { start: at(300), end: at(300 + life.current.plan.activity.durationMinutes) }, true, at(5));
+  const pv = life.pending;
+  add(`<div class="change" id="chg"><b>Amir proposed v${pv.version}: start at ${hm(pv.plan.start)}</b>
+    <p>v${life.currentVersion} at ${hm(life.current.plan.start)} stays the plan until everyone approves.</p>
+    <div class="row"><button class="mini" id="keep">keep ${hm(life.current.plan.start)}</button><button class="mini go" id="ok">works for me</button></div></div>`);
+  $("#keep").onclick = () => { life.decline("d", "sarah", pv.version, at(6));
+    $("#chg").outerHTML = `<div class="sys">change declined. v${life.currentVersion} stays the plan. nobody sees who said no.</div>`; };
+  $("#ok").onclick = async () => {
+    $("#chg").outerHTML = `<div class="sys" id="appr">approving v${pv.version}…</div>`;
+    for (const u of pv.plan.attendeeIds) {
+      life.accept(`c:${u}`, u, pv.version, true, at(6));
+      await sleep(350);
+    }
+    if (!t.alive()) return;
+    $("#appr").outerHTML = `<div class="sys">✓ everyone approved. plan updated to v${life.currentVersion}, reminder moved.</div>`;
+    const pin = $("#pin"); pin.outerHTML = pinned(life.current); $("#pin").classList.add("flip");
+    await sleep(700);
+    add(`<div class="bub them"><small>Amir</small>legend, thank you 🙏</div>`);
+  };
+}
+
+// ---------- 6. run it back ----------
+async function repeat() {
+  if (!state.life) await quickConfirm();
+  const life = state.life;
+  if (life.pending) life.decline("d:end", "sarah", life.pendingVersion, at(7));
+  if (life.state === "confirmed") life.complete(at(420));
+  const t = show(`
+    <div style="flex:1;display:grid;align-content:center;gap:22px">
+      <div class="big-emoji">${ART[life.current.plan.activity.id]}</div>
+      <div class="won"><div class="kicker">only you see this</div><h1>run it back <em>next sunday?</em></h1></div>
+      <div class="choice" id="choice"><button class="ghost" id="pass">pass</button><button class="cta" id="yes" style="margin:0">yes, again</button></div>
+      <div id="out"></div>
+    </div>
+    <button class="ghost" id="restart">↺ restart demo</button>`, 5);
+  $("#restart").onclick = home;
+  const answer = (yes) => {
+    life.recordRepeat("sarah", yes); life.recordRepeat("amir", true); life.recordRepeat("jenna", true); life.recordRepeat("kai", false);
+    const roster = life.nextRoundRoster();
+    $("#choice").remove();
+    $("#out").innerHTML = `<div class="note">
+      <div class="label">next week's round</div>
+      <div class="avatars">${roster.map((u) => av(u)).join("")}</div>
+      <div>${roster.length} people said yes. huddle will ask each of them for fresh availability on thursday. passes stay private, and nobody is signed up automatically.</div></div>`;
+  };
+  $("#yes").onclick = () => answer(true);
+  $("#pass").onclick = () => answer(false);
+}
+
+// ---------- helpers ----------
+async function ensureOptions() {
+  if (state.options.length) return;
+  state.options = generateProposals({ outing: fx.outing, users: state.users, grants: fx.grants,
+    responses: fx.responses, activities: fx.activities, now: fx.NOW }).options;
+}
+async function quickConfirm() {
+  await ensureOptions();
+  const c = state.options[0]; state.pick = c;
+  const life = new OutingLifecycle(fx.outing, state.users); state.life = life;
+  life.openCollecting(); life.propose("p1", "sarah", c, fx.NOW);
+  for (const u of c.attendeeIds) life.accept(`a:${u}`, u, 1, true, at(2));
+}
+async function jump(i) {
+  if (i === 0) return home();
+  if (!state) reset();
+  if (i >= 3) { reset(); await ensureOptions(); }
+  if (i === 4 || i === 5) await quickConfirm();
+  [home, gather, match, () => confirmPlan(), thread, repeat][i]();
+}
+
+function confetti() {
+  const phone = $("#phone");
+  const cv = document.createElement("canvas"); cv.className = "confetti";
+  cv.width = 390 * 2; cv.height = 844 * 2; phone.append(cv);
+  const ctx = cv.getContext("2d"); ctx.scale(2, 2);
+  const colors = ["#ff7a59", "#ffc857", "#7fe0c4", "#f6a6c1", "#a9b8ff"];
+  const ps = Array.from({ length: 140 }, () => ({ x: 195, y: 330, vx: (Math.random() - .5) * 14, vy: -Math.random() * 14 - 4,
+    r: Math.random() * 6 + 4, a: Math.random() * 6, va: (Math.random() - .5) * .4, c: colors[Math.floor(Math.random() * colors.length)] }));
+  const t0 = performance.now();
+  (function frame(now) {
+    ctx.clearRect(0, 0, 390, 844);
+    for (const p of ps) { p.vy += .35; p.vx *= .99; p.x += p.vx; p.y += p.vy; p.a += p.va;
+      ctx.save(); ctx.translate(p.x, p.y); ctx.rotate(p.a); ctx.fillStyle = p.c; ctx.fillRect(-p.r / 2, -p.r / 4, p.r, p.r / 2); ctx.restore(); }
+    if (now - t0 < 3200) requestAnimationFrame(frame); else cv.remove();
+  })(t0);
+}
+
+home();
+</script>
+
+</body></html>
