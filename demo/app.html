@@ -167,6 +167,14 @@ canvas.confetti { position: absolute; inset: 0; z-index: 30; pointer-events: non
 .big-emoji { font-size: 84px; text-align: center; animation: pop .7s both; }
 .choice { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
 .note { background: var(--card); border-radius: 20px; padding: 16px; font-size: 14px; line-height: 1.5; display: grid; gap: 10px; animation: rise .5s both; }
+.input { all: unset; display: block; width: 100%; box-sizing: border-box; font: 600 18px/1.4 var(--body); color: var(--text); min-height: 52px; caret-color: var(--coral); white-space: pre-wrap; }
+.input::placeholder { color: #ffffff40; }
+.link { all: unset; cursor: pointer; justify-self: start; font-size: 12px; font-weight: 700; color: var(--coral); }
+.link:focus-visible, .tap:focus-visible { outline: 2px solid var(--coral); outline-offset: 2px; }
+.tap { all: unset; cursor: pointer; box-sizing: border-box; transition: transform .15s, background .2s; }
+.tap:hover { background: var(--card-2); } .tap:active { transform: scale(.98); }
+.reply.tap { display: flex; } .who.tap { display: flex; padding: 6px 8px; border-radius: 14px; }
+.actions { grid-template-columns: 1fr 1fr; }
 @media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation-duration: .01s !important; transition-duration: .01s !important; } }
 </style>
 
@@ -238,13 +246,27 @@ function fit() {
 addEventListener("resize", fit); fit();
 
 // ---------- 1. ask ----------
-async function home() {
+function parseRequest(text) {
+  // Lightweight on-device preview of what the assistant extracts (the LLM does this in the full product).
+  const t = text.toLowerCase(), chips = [];
+  const day = t.match(/\b(mon|tues|wednes|thurs|fri|satur|sun)day\b|\btoday\b|\btomorrow\b/);
+  const win = t.match(/(\d{1,2})(?::\d\d)?\s*(am|pm)?\s*(?:to|-|–)\s*(\d{1,2})(?::\d\d)?\s*(am|pm)?/);
+  if (day || win) chips.push(["📅", day ? day[0] : "when", win ? `${win[1]}–${win[3]}${win[4] || win[2] || " PM"}` : ""]);
+  const vibe = ["active", "chill", "outside", "food", "sports", "music", "walk", "eat"].find((k) => t.includes(k));
+  if (vibe) chips.push(["⚡", vibe, ""]);
+  if (/circle|friends|crew|group/.test(t)) chips.push(["👥", "weekend circle", ""]);
+  const money = t.match(/\$\s?(\d+)/); if (money) chips.push(["💸", "under", "$" + money[1]]);
+  return chips;
+}
+
+function home() {
   reset();
-  const t = show(`
+  show(`
     <div class="rise"><div class="kicker">sunday · weekend circle</div><h1>what are we<br>doing <em>today?</em></h1></div>
     <div class="composer rise" style="animation-delay:.1s">
-      <div class="typed" id="typed"><span class="caret"></span></div>
-      <div class="label">what huddle understood</div>
+      <label class="label" for="req">tell huddle what you feel like</label>
+      <textarea id="req" class="input" rows="3" placeholder="free sunday 2 to 6, something active, under $15"></textarea>
+      <button class="link" id="example">use example ↵</button>
       <div class="chips" id="chips"></div>
     </div>
     <div class="circle-row rise" style="animation-delay:.2s">
@@ -252,41 +274,41 @@ async function home() {
       <div class="avatars">${["sarah","amir","jenna","kai"].map((u) => av(u)).join("")}</div>
     </div>
     <button class="cta" id="go" disabled>find us a plan →</button>`, 0);
-  const text = "free sunday 2 to 6, something active, with my weekend circle, under $15";
-  const el = $("#typed");
-  await sleep(700);
-  for (let i = 1; i <= text.length; i++) {
-    if (!t.alive()) return;
-    el.innerHTML = text.slice(0, i) + '<span class="caret"></span>';
-    await sleep(28);
-  }
-  const chips = [["📅", "Sun, Oct 18", "2–6 PM"], ["⚡", "active", ""], ["👥", "weekend circle", ""], ["💸", "under", "$15"]];
-  for (const [e, a, b] of chips) {
-    await sleep(260); if (!t.alive()) return;
-    $("#chips").insertAdjacentHTML("beforeend", `<span class="chip">${e} ${a} ${b ? `<i>${b}</i>` : ""}</span>`);
-  }
-  const go = $("#go"); go.disabled = false; go.onclick = gather;
+  const req = $("#req"), go = $("#go"), chips = $("#chips");
+  const update = () => {
+    const parsed = parseRequest(req.value);
+    chips.innerHTML = parsed.map(([e, a, b]) => `<span class="chip">${e} ${a} ${b ? `<i>${b}</i>` : ""}</span>`).join("");
+    go.disabled = req.value.trim().length < 4;
+  };
+  req.addEventListener("input", update);
+  req.addEventListener("keydown", (e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); if (!go.disabled) gather(); } });
+  $("#example").onclick = () => { req.value = "free sunday 2 to 6, something active, with my weekend circle, under $15"; update(); req.focus(); };
+  go.onclick = gather;
+  setTimeout(() => req.focus(), 400);
 }
 
 // ---------- 2. private replies ----------
-async function gather() {
-  const t = show(`
-    <div class="rise"><div class="kicker">step 2</div><h1>asking your circle <em>privately</em></h1></div>
+function gather() {
+  show(`
+    <div class="rise"><div class="kicker">sent privately to each friend</div><h1>waiting on <em>replies</em></h1></div>
     <div class="orbit"><div class="core"></div><div class="ring">
       ${["amir","jenna","kai"].map((u, i) => {
         const a = (i / 3) * Math.PI * 2 - Math.PI / 2;
         return `<div class="av c-${u}" style="left:${125 + 125 * Math.cos(a) - 22}px;top:${125 + 125 * Math.sin(a) - 22}px"><span>${NAMES[u][0]}</span></div>`;
       }).join("")}
     </div></div>
+    <div class="label">tap a friend to bring in their reply</div>
     <div class="replies">${["amir","jenna","kai"].map((u) =>
-      `<div class="reply" id="r-${u}">${av(u, "sm")} ${NAMES[u]}<span class="st">texting…</span></div>`).join("")}</div>
-    <div class="privacy">🔒 budgets, travel and any passes stay between each person and huddle. not even you see them.</div>`, 1);
-  for (const u of ["kai", "amir", "jenna"]) {
-    await sleep(900); if (!t.alive()) return;
-    const r = $(`#r-${u}`); r.classList.add("in"); r.querySelector(".st").textContent = "✓ replied privately";
-  }
-  await sleep(900); if (!t.alive()) return;
-  match();
+      `<button class="reply tap" id="r-${u}" data-u="${u}">${av(u, "sm")} ${NAMES[u]}<span class="st">texting…</span></button>`).join("")}</div>
+    <div class="privacy">🔒 budgets, travel and any passes stay between each person and huddle. not even you see them.</div>
+    <button class="cta" id="next" disabled>see what works →</button>`, 1);
+  const done = new Set();
+  $(".replies").addEventListener("click", (e) => {
+    const r = e.target.closest(".reply"); if (!r || done.has(r.dataset.u)) return;
+    done.add(r.dataset.u); r.classList.add("in"); r.querySelector(".st").textContent = "✓ replied privately";
+    if (done.size === 3) $("#next").disabled = false;
+  });
+  $("#next").onclick = match;
 }
 
 // ---------- 3. match ----------
@@ -321,33 +343,28 @@ async function confirmPlan(c) {
   life.openCollecting();
   life.propose("p1", "sarah", c, fx.NOW);
   const v = life.pendingVersion;
-  const t = show(`
+  show(`
     <div class="plan rise">
       <div class="hero g-${c.activity.id}">${ART[c.activity.id]}<span class="ver">v${v}</span></div>
       <div class="info"><h2>${c.activity.name}</h2>
         <div class="when">${time(c.start)} – ${hm(c.end)}</div>
         <div class="where">${c.activity.venueName} · ${c.activity.area} · ${c.activity.costPerPerson ? "$" + c.activity.costPerPerson : "free"}</div></div>
     </div>
-    <div class="label">everyone confirms this exact plan</div>
+    <div class="label">everyone confirms this exact plan · tap a friend to confirm as them</div>
     <div class="roster">${c.attendeeIds.map((u) =>
-      `<div class="who" id="w-${u}">${av(u, "sm")} ${NAMES[u]}<span class="st">waiting</span></div>`).join("")}</div>
-    <div class="deadline" id="dl">replies close in 30:00</div>
+      `<button class="who tap" id="w-${u}" data-u="${u}">${av(u, "sm")} ${NAMES[u]}${u === "sarah" ? " (you)" : ""}<span class="st">waiting</span></button>`).join("")}</div>
+    <div class="deadline">replies close in 30 min · silence or "maybe" never counts as yes</div>
     <button class="cta" id="me">confirm v${v} & share my contact</button>`, 3);
 
-  let left = 30 * 60;
-  const timer = setInterval(() => { if (!t.alive()) return clearInterval(timer); left -= 7;
-    $("#dl").textContent = `replies close in ${Math.floor(left / 60)}:${String(left % 60).padStart(2, "0")}`; }, 1000);
-
-  const mark = (u) => { const s = $(`#w-${u} .st`); s.className = "st ok"; s.innerHTML = '<span class="tick">✓</span> confirmed'; };
-  $("#me").onclick = async () => {
-    $("#me").disabled = true;
-    life.accept("a:sarah", "sarah", v, true, at(1)); mark("sarah");
-    for (const u of c.attendeeIds.filter((x) => x !== "sarah")) {
-      await sleep(750); if (!t.alive()) return;
-      const r = life.accept(`a:${u}`, u, v, true, at(2)); mark(u);
-      if (r.message === "confirmed") { clearInterval(timer); await sleep(500); return celebrate(); }
-    }
+  const accept = async (u) => {
+    const r = life.accept(`a:${u}`, u, v, true, at(2));
+    if (!r.ok) return;
+    const s = $(`#w-${u} .st`); s.className = "st ok"; s.innerHTML = '<span class="tick">✓</span> confirmed';
+    if (u === "sarah") { $("#me").disabled = true; $("#me").textContent = "you're in · waiting on friends"; }
+    if (r.message === "confirmed") { await sleep(600); celebrate(); }
   };
+  $("#me").onclick = () => accept("sarah");
+  $(".roster").addEventListener("click", (e) => { const b = e.target.closest(".who"); if (b) accept(b.dataset.u); });
 }
 
 async function celebrate() {
@@ -374,42 +391,46 @@ function pinned(p) {
 async function thread() {
   if (!state.life) await quickConfirm();
   const life = state.life;
-  const t = show(`
+  show(`
     ${pinned(life.current)}
     <div class="thread" id="th"><div class="sys">🔒 only confirmed people are in this chat</div></div>
-    <div class="actions"><button class="mini" id="late">I'm running late</button><button class="mini" id="after">it's over →</button></div>`, 4);
+    <div class="label">simulate</div>
+    <div class="actions">
+      <button class="mini" id="amir">Amir asks for 3 PM</button>
+      <button class="mini" id="late">I'm running late</button>
+      <button class="mini" id="msg">Jenna sends a message</button>
+      <button class="mini go" id="after">it's over →</button>
+    </div>`, 4);
   const th = $("#th");
-  const add = (html) => th.insertAdjacentHTML("beforeend", html);
+  const add = (html) => { th.insertAdjacentHTML("beforeend", html); };
+  $("#after").onclick = repeat;
+  $("#msg").onclick = () => add(`<div class="bub them"><small>Jenna</small>so hyped 🏓 bringing extra paddles</div>`);
   $("#late").onclick = () => {
     life.recordLateness("late:" + Date.now(), "sarah", 10, at(290));
     add(`<div class="sys">heads-up sent to the others: <b>Sarah is running about 10 min late</b>. plan time unchanged, no location shared.</div>`);
-    $("#late").disabled = true;
   };
-  $("#after").onclick = repeat;
-
-  await sleep(900); if (!t.alive()) return;
-  add(`<div class="bub them"><small>Jenna</small>so hyped 🏓</div>`);
-  await sleep(1100); if (!t.alive()) return;
-  add(`<div class="bub them"><small>Amir</small>can we push to 3? my bus is being weird</div>`);
-  await sleep(900); if (!t.alive()) return;
-  life.requestChange("chg", "amir", { start: at(300), end: at(300 + life.current.plan.activity.durationMinutes) }, true, at(5));
-  const pv = life.pending;
-  add(`<div class="change" id="chg"><b>Amir proposed v${pv.version}: start at ${hm(pv.plan.start)}</b>
-    <p>v${life.currentVersion} at ${hm(life.current.plan.start)} stays the plan until everyone approves.</p>
-    <div class="row"><button class="mini" id="keep">keep ${hm(life.current.plan.start)}</button><button class="mini go" id="ok">works for me</button></div></div>`);
-  $("#keep").onclick = () => { life.decline("d", "sarah", pv.version, at(6));
-    $("#chg").outerHTML = `<div class="sys">change declined. v${life.currentVersion} stays the plan. nobody sees who said no.</div>`; };
-  $("#ok").onclick = async () => {
-    $("#chg").outerHTML = `<div class="sys" id="appr">approving v${pv.version}…</div>`;
-    for (const u of pv.plan.attendeeIds) {
-      life.accept(`c:${u}`, u, pv.version, true, at(6));
-      await sleep(350);
-    }
-    if (!t.alive()) return;
-    $("#appr").outerHTML = `<div class="sys">✓ everyone approved. plan updated to v${life.currentVersion}, reminder moved.</div>`;
-    const pin = $("#pin"); pin.outerHTML = pinned(life.current); $("#pin").classList.add("flip");
-    await sleep(700);
-    add(`<div class="bub them"><small>Amir</small>legend, thank you 🙏</div>`);
+  $("#amir").onclick = () => {
+    if (life.pending) return;
+    $("#amir").disabled = true;
+    add(`<div class="bub them"><small>Amir</small>can we push to 3? my bus is being weird</div>`);
+    const start = Date.parse(life.current.plan.start) + 30 * MIN;
+    life.requestChange("chg:" + Date.now(), "amir",
+      { start: new Date(start).toISOString(), end: new Date(start + life.current.plan.activity.durationMinutes * MIN).toISOString() }, true, at(5));
+    const pv = life.pending;
+    add(`<div class="change" id="chg"><b>Amir proposed v${pv.version}: start at ${hm(pv.plan.start)}</b>
+      <p>v${life.currentVersion} at ${hm(life.current.plan.start)} stays the plan until everyone approves.</p>
+      <div class="row"><button class="mini" id="keep">keep ${hm(life.current.plan.start)}</button><button class="mini go" id="ok">works for me</button></div></div>`);
+    $("#keep").onclick = () => {
+      life.decline("d:" + Date.now(), "sarah", pv.version, at(6));
+      $("#chg").outerHTML = `<div class="sys">change declined. v${life.currentVersion} stays the plan. nobody sees who said no.</div>`;
+      $("#amir").disabled = false;
+    };
+    $("#ok").onclick = () => {
+      for (const u of pv.plan.attendeeIds) life.accept(`c:${pv.version}:${u}`, u, pv.version, true, at(6));
+      $("#chg").outerHTML = `<div class="sys">✓ everyone approved. plan updated to v${life.currentVersion}, reminder moved.</div>`;
+      $("#pin").outerHTML = pinned(life.current); $("#pin").classList.add("flip");
+      $("#amir").disabled = false;
+    };
   };
 }
 
